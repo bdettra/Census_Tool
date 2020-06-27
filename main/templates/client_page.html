@@ -1,0 +1,29 @@
+﻿{% extends "layout.html" %}
+{% block content %}
+<div id="body-content">
+    <div class="row">
+        <div class="col-sm-9">
+            <button class="btn btn-primary show-form" href="#" data-url="{% url 'create_engagement' client.slug %}">Add Engagement</a></button>
+            <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="engagement_table">
+                <thead>
+                    <th style="width:25%">Engagement Name</th>
+                    <th style="width:50%">Engagement Date</th>
+                </thead>
+                <tbody>
+                    {% include 'engagement_list.html' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modal-new_engagement">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+{% endblock content %}
+
+

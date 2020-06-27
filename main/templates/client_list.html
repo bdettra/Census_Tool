@@ -1,0 +1,10 @@
+{% for client in clients %}
+<tr>
+    <td>
+        {{client.number}}
+    </td>
+    <td>
+        <a href="{% url 'client_page' client.slug %}">{{client.name}}</a>
+    </td>
+</tr>
+{% endfor %}
