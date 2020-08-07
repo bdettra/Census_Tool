@@ -1,12 +1,12 @@
 {% block content %}
 {% load crispy_forms_tags %}
 
-<form method="post" data-url="{% url 'create_client' %}" class="create-client_form">
+<form method="post" data-url="{% url 'edit_client' client.slug %}" action="{% url 'edit_client' client.slug %}" class="edit-client_form">
 
     {% csrf_token %}
 
         <div class="modal-header">
-            <h5 class="modal-title">Create Client</h5>
+            <h5 class="modal-title">Edit Client</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                 <span aria-hidden="true">&times;</span>
             </button>
@@ -52,7 +52,7 @@
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 
-            <button type="submit" class="btn btn-primary">Add Client</button>
+            <button type="submit" class="btn btn-primary">Submit</button>
 
         </div>
 

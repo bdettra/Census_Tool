@@ -7,41 +7,28 @@ from django.template.response import TemplateResponse
 from django.db.models import Avg, Count, Min, Sum, Value
 from . import views
 
-class StringRowAdmin(admin.ModelAdmin):
-    model=models.StringRow
-    list_display=("column","data")
 
-class FloatRowAdmin(admin.ModelAdmin):
-    model=models.FloatRow
-    list_display=("column","data")
-
-class IntegerRowAdmin(admin.ModelAdmin):
-    model=models.IntegerRow
-    list_display=("column","data")
-
-class DateRowAdmin(admin.ModelAdmin):
-    model=models.DateRow
-    list_display=("column","data")
-
-class ColumnAdmin(admin.ModelAdmin):
-    model=models.column
-    list_display=("name","d_type")
-
-class SpreadsheetAdmin(admin.ModelAdmin):
-    model=models.spreadsheet
-    list_display=("name","date","template")
-
-class TemplateSpreadsheetAdmin(admin.ModelAdmin):
-    model=models.TemplateSpreadsheet
-    list_display=("name","client")
+class EligibilityRules(admin.ModelAdmin):
+    model=models.eligibility_rules
+    list_display=("age","service_hours","service_days","service_months",
+    "service_years","excluded_employees","entry_date","engagement",)
 
 class EngagementAdmin(admin.ModelAdmin):
     model=models.engagement
-    list_display=("name","date","client")
+    list_display=("name","date","client","soc_1_reliance",)
 
 class ClientAdmin(admin.ModelAdmin):
     model=models.client
     list_display=("name","number",)
+
+class ParticipantAdmin(admin.ModelAdmin):
+    models=models.participant
+    list_display=("first_name","last_name","SSN","DOB","DOH","DOT","DORH","excluded",
+    "gross_wages","eligible_wages","hours_worked","EE_pre_tax_amount","ER_pre_tax_amount",
+    "EE_roth_amount","ER_roth_amount","EE_catch_up","ER_catch_up",
+    "effective_deferral_percentage","selection","key_employee","eligible",
+    "participating","engagement","id",)
+
 
 class UserAdmin(DjangoUserAdmin):
     fieldsets=(
@@ -119,9 +106,5 @@ main_admin=OwnersAdminSite()
 main_admin.register(models.User,UserAdmin)
 main_admin.register(models.client,ClientAdmin)
 main_admin.register(models.engagement,EngagementAdmin)
-main_admin.register(models.spreadsheet,SpreadsheetAdmin)
-main_admin.register(models.column,ColumnAdmin)
-main_admin.register(models.StringRow,StringRowAdmin)
-main_admin.register(models.IntegerRow,IntegerRowAdmin)
-main_admin.register(models.FloatRow,FloatRowAdmin)
-main_admin.register(models.DateRow,DateRowAdmin)
+main_admin.register(models.eligibility_rules,EligibilityRules)
+main_admin.register(models.participant,ParticipantAdmin)

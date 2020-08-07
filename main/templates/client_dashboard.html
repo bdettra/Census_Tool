@@ -3,7 +3,8 @@
 <div class="body-content">
     <div class="row">
         <div class="col-sm-9">
-            <button class="btn btn-primary show-form" href="#" data-url="{% url 'create_client' %}">Add Client</a></button>
+            <h1>Welcome to your client dashbaord {{user.first_name}}</h1>
+            <button class="btn btn-primary show-client_form" href="#" data-url="{% url 'create_client' %}">Add Client</a></button>
 
             <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="client_table">
                 <thead>
@@ -26,4 +27,6 @@
 </div>
 
 {% endblock content %}
+
+
 

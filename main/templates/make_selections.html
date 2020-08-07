@@ -1,0 +1,30 @@
+{% block content %}
+{% load crispy_forms_tags %}
+
+ 
+<form method="post" data-url="{% url 'make_selections' client.slug engagement.slug %}" class="selections-form">
+
+    {% csrf_token %}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Generate Selections</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        Are you sure you want to make selections?
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+    </div>
+
+
+</form>
+
+{% endblock content %}

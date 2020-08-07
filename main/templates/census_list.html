@@ -1,0 +1,109 @@
+{% load l10n %}
+{% load humanize %}
+
+{% for participant in participants %}
+<tr>
+    <td>
+        {{participant.first_name}}
+    </td>
+    <td>
+        {{participant.last_name}}
+    </td>
+    <td>
+        {{participant.SSN}}
+    </td>
+    <td>
+        {{participant.DOB}}
+    </td>
+    <td>
+        {{participant.DOH}}
+    </td>
+    <td>
+        {{participant.DOT}}
+    </td>
+    <td>
+        {{participant.DORH}}
+    </td>
+    <td style="text-align:center"> 
+        {% if participant.excluded %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+    <td>
+        {% if participant.gross_wages == 0 %}
+            -
+        {% else %}
+            {{participant.gross_wages}}
+        {% endif %}
+    </td>
+    <td>
+        {% if participant.eligible_wages == 0 %}
+            -
+        {% else %}
+            {{participant.eligible_wages}}
+        {% endif %}
+    </td>
+    <td>
+        {% if participant.hours_worked == 0 %}
+            -
+        {% else %}
+            {{participant.hours_worked}}
+        {% endif %}
+    </td>
+    <td style="text-align:center">
+        {% if participant.EE_pre_tax_amount == 0 %}
+            -
+        {% else %}
+            {{participant.EE_pre_tax_amount}}
+        {% endif %}
+    </td>
+    <td>
+        {{participant.ER_pre_tax_amount}}
+    </td>
+    <td>
+        {{participant.EE_roth_amount}}
+    </td>
+    <td>
+        {{participant.ER_roth_amount}}
+    </td>
+    <td>
+        {{participant.EE_catch_up}}
+    </td>
+    <td>
+        {{participant.ER_catch_up}}
+    </td>
+    <td>
+        {{participant.effective_deferral_percentage | floatformat:2}} % 
+    </td>
+    <td style="text-align:center"> 
+        {% if participant.selection %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+    <td style="text-align:center">
+        {% if participant.key_employee %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+    <td style="text-align:center">
+        {% if participant.eligible %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+    <td style="text-align:center">
+        {% if participant.participating %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}

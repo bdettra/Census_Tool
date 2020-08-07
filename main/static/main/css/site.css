@@ -44,3 +44,13 @@ input[type="checkbox"].input-validation-error {
     display: none;
 }
 
+.ajaxProgress {
+    display:none;
+    text-align:center;
+    padding:0px;
+    width:500px;
+    position:absolute;
+    top:30%;
+    left: 30%;
+}
+

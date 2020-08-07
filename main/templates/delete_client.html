@@ -1,0 +1,30 @@
+{% block content %}
+
+
+ 
+<form method="post" data-url="{% url 'delete_client' client.slug %}" class="delete-form">
+
+    {% csrf_token %}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Delete Client</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        ARE YOU SURE YOU WANT TO DELETE THIS
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+        <button type="submit" class="btn btn-danger">Delete Client</button>
+
+    </div>
+
+
+</form>
+
+{% endblock content %}

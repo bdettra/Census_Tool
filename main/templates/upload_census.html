@@ -1,35 +1,25 @@
-﻿{% block content %}
+{% block content %}
 {% load crispy_forms_tags %}
 
- 
-<form method="post" data-url="{% url 'create_engagement' client.slug %}" class="create-form">
+<form method="post" data-url="{% url 'upload_census' client.slug engagement.slug %}" action="{% url 'upload_census' client.slug engagement.slug %}" class="census-form" enctype="multipart/form-data">
 
     {% csrf_token %}
 
     <div class="modal-header">
-        <h5 class="modal-title">Create Engagement</h5>
+        <h5 class="modal-title">Upload Census File</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
     </div>
-
+        
     <div class="modal-body">
         <div class="form-group">
-            <label for="engagement_name" class="col-md-2 control-label">Engagement Name</label>
             <div class="col-md-10">
-                {{form.name}}
+                {{form.filename}}
             </div>
         </div>
     </div>
-    <div class="modal-body">
-        <div class="form-group">
-            <label for="engagement_date" class="col-md-2 control-label">Engagement Date</label>
-            <div class="col-md-10">
-                {{form.date}}
-            </div>
-        </div>
-    </div>
-        {% if form.errors %}
+    {% if form.errors %}
         {% for field in form %}
             {% for error in field.errors %}
                 <div class="alert alert-danger">
@@ -41,15 +31,14 @@
         <p class="validation-summary-errors">{{error | escape}}</p>
         {% endfor %}
     {% endif %}
- 
-
-    <div class="modal-footer">
+        
+    <div class="modal-footer" style="padding-top: 10px;">
+        
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 
-        <button type="submit" class="btn btn-primary">Add Engagement</button>
+        <button type="submit-census" class="btn btn-primary">Upload</button>
 
     </div>
-
 
 </form>
 

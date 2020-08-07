@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Count
+from django_random_queryset import RandomManager
 
 
 class UserManager(BaseUserManager):
@@ -35,7 +36,6 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     username=None
     email=models.EmailField('email address',unique=True)
-    company_name=models.CharField(max_length=100,verbose_name="Company Name: ")
 
     USERNAME_FIELD='email'
     REQUIRED_FIELDS=[]
@@ -48,49 +48,61 @@ class client(models.Model):
     users=models.ManyToManyField(User)
     slug=models.SlugField()
 
-
 class engagement(models.Model):
     name=models.CharField(max_length=50,verbose_name="Engagement Name: ")
     date=models.DateField()
     client=models.ForeignKey(client,on_delete=models.CASCADE)
     slug=models.SlugField()
+    soc_1_reliance=models.BooleanField(default=False)
 
-class TemplateSpreadsheet(models.Model):
-    name=models.CharField(max_length=50)
-    client=models.ForeignKey(client,on_delete=models.CASCADE)
-
-class spreadsheet(models.Model):
-    name=models.CharField(max_length=100,verbose_name="Spreadsheet Name: ")
-    template=models.ForeignKey(TemplateSpreadsheet,on_delete=models.CASCADE)
-    date=models.DateField()
-
-class column(models.Model):
+class eligibility_rules(models.Model):
     CHOICES=(
-        ("String","String"),
-        ('Float',"Float"),
-        ("Date","Date"),
-        ("Integer","Integer"),
+        ("Immediately","Immediately"),
+        ("First day of following Month", "First day of following month"),
+        ("Semi Annual (Jan 1 or July 1)", "Semi Annual (Jan 1 or July 1)"),
+        ("Annual (Jan 1)","Annual (Jan 1)"),
     )
-    name=models.CharField(max_length=25)
-    spreadsheet=models.ManyToManyField(spreadsheet)
-    d_type=models.CharField(choices=CHOICES,max_length=25)
 
-class StringRow(models.Model):
-    column=models.ForeignKey(column,on_delete=models.CASCADE)
-    data=models.CharField(max_length=50)
+    age=models.IntegerField(null=True,blank=True)
+    service_hours=models.IntegerField(null=True,blank=True)
+    service_days=models.IntegerField(null=True, blank=True)
+    service_months=models.IntegerField(null=True,blank=True)
+    service_years=models.IntegerField(null=True,blank=True)
+    excluded_employees=models.TextField(blank=True, null=True)
+    entry_date=models.CharField(choices=CHOICES,max_length=50,default="Immediately")
+    engagement=models.ForeignKey(engagement,on_delete=models.CASCADE)
+    
 
-class FloatRow(models.Model):
-    column=models.ForeignKey(column,on_delete=models.CASCADE)
-    data=models.FloatField()
+class participant(models.Model):
+    objects=RandomManager()
 
-class IntegerRow(models.Model):
-    column=models.ForeignKey(column,on_delete=models.CASCADE)
-    data=models.IntegerField()
+    first_name=models.CharField(max_length=50)
+    last_name=models.CharField(max_length=50)
+    SSN=models.CharField(max_length=11)
+    DOB=models.DateField(blank=True, null=True)
+    DOH=models.DateField(blank=True, null=True)
+    DOT=models.DateField(blank=True, null=True)
+    DORH=models.DateField(blank=True,null=True)
+    excluded=models.BooleanField(blank=True,null=True)
+    gross_wages=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    eligible_wages=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    hours_worked=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    EE_pre_tax_amount=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    ER_pre_tax_amount=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    EE_roth_amount=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    ER_roth_amount=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    EE_catch_up=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    ER_catch_up=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    effective_deferral_percentage=models.FloatField(blank=True,null=True)
+    selection=models.BooleanField(blank=True,null=True)
+    key_employee=models.BooleanField(blank=True,null=True)
+    eligible=models.BooleanField(blank=True,null=True)
+    participating=models.BooleanField(blank=True,null=True)
+    contributing=models.BooleanField(blank=True,null=True)
+    engagement=models.ForeignKey(engagement,on_delete=models.CASCADE)
 
-class DateRow(models.Model):
-    column=models.ForeignKey(column,on_delete=models.CASCADE)
-    data=models.DateField
-
+    def __str__(self):
+        return self.first_name +" "+ self.last_name
 
     
 

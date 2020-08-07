@@ -1,10 +1,10 @@
 ﻿{% for engagement in engagements %}
 <tr>
     <td>
-        {{engagement.name}}
+        {{engagement.date}}
     </td>
     <td>
-        <a href="">{{engagement.date}}</a>
+        <a href="{% url 'engagement_page' client.slug engagement.slug %}">{{engagement.name}}</a>
     </td>
 </tr>
 {% endfor %}

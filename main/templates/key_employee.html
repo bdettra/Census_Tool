@@ -1,0 +1,81 @@
+{% block content %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+{% load static %}
+
+ 
+<form method="post" data-url="{% url 'key_employees' client.slug engagement.slug %}" class="key_employee-form">
+
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Select Key Employees</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        <div class="container col">
+            <div class="row">
+                {% for form in formset.forms %}
+                    {% if forloop.counter < 50 %}
+                        <div class="col-md-4">
+                            {{forloop.counter}}.)
+                            {{form.instance.first_name}} {{ form.instance.last_name}} 
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    {% render_field field class="form-control is-invalid" %}
+                                {% else %}
+                                    {% render_field field %}
+                                {% endif %}
+                            {% endfor %}           
+                        </div>
+                    {% elif forloop.counter > 50 %}
+                        <div class="col-md-4">
+                            {{forloop.counter}}
+                            {{form.instance.first_name}} {{ form.instance.last_name}} 
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    {% render_field field class="form-control is-invalid" %}
+                                {% else %}
+                                    {% render_field field %}
+                                {% endif %}
+                            {% endfor %}           
+                        </div> 
+                    {% elif forloop.counter > 100 %}   
+                        <div class="col-md-4">
+                            {{forloop.counter}}
+                            {{form.instance.first_name}} {{ form.instance.last_name}} 
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    {% render_field field class="form-control is-invalid" %}
+                                {% else %}
+                                    {% render_field field %}
+                                {% endif %}
+                            {% endfor %}           
+                        </div>                                        
+                    {% endif %}
+                {% endfor %}
+    
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+        <button type="submit" class="btn btn-primary keye">Submit</button>
+
+    </div>
+
+
+</form>
+
+{% endblock content %}
+
+<div class="ajaxProgress">
+    <h3>Loading</h3>
+    <img src="{% static 'main/images/ajax-loader.gif' %}" alt="loading"/>
+</div>
