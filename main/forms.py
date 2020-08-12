@@ -126,6 +126,8 @@ class EditClientForm(forms.ModelForm):
         elif models.client.objects.filter(number=number).exists() and self.client.number != number:
             raise forms.ValidationError("This client number already exists")
 
+        return self.cleaned_data
+
     def save(self):
         name=self.cleaned_data.get("name")
         number=self.cleaned_data.get("number")
@@ -139,7 +141,6 @@ class EditClientForm(forms.ModelForm):
         instance.save()
 
 
-        return self.cleaned_data
 
 
 class NewEngagementForm(BSModalForm):
@@ -169,7 +170,11 @@ class NewEngagementForm(BSModalForm):
     def get_user(self):
         return self.user
 
-class EligibilityForm(BSModalForm):
+class EligibilityForm(forms.ModelForm):
+
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+
     class Meta:
         model=models.eligibility_rules
         fields=("age","service_hours","service_days","service_months","service_years",
@@ -182,8 +187,76 @@ class EligibilityForm(BSModalForm):
         'service_years':forms.fields.NumberInput(attrs={"placeholder":"Enter Service Years",'class':'form-control'}),
         'excluded_employees':forms.Textarea(attrs={"rows":3,"placeholder":"Enter Excluded Employees",'class':'form-control'}),
         'entry_date':forms.fields.Select(attrs={"placeholder":"Enter Entry Date",'class':'form-control'})
-        
         }
+
+    def clean(self):
+        data=[]
+        age=self.cleaned_data.get("age")
+        data.append(age)
+
+        service_hours=self.cleaned_data.get("service_hours")
+        data.append(service_hours)
+
+        service_days=self.cleaned_data.get("service_days")
+        data.append(service_days)
+
+        service_months=self.cleaned_data.get("service_months")
+        data.append(service_months)
+
+        service_years=self.cleaned_data.get("service_years")
+        data.append(service_years)
+        
+        excluded_employees=self.cleaned_data.get("excluded_employees")
+
+        entry_date=self.cleaned_data.get("entry_date")
+
+        for value in data:
+            if value is None:
+                value=0
+            if value < 0:
+                raise forms.ValidationError("Values must be greater than 0.")
+
+        return self.cleaned_data
+
+    
+    def save(self,engagement):
+        data=[]
+        age=self.cleaned_data.get("age")
+        data.append(age)
+
+        service_hours=self.cleaned_data.get("service_hours")
+        data.append(service_hours)
+
+        service_days=self.cleaned_data.get("service_days")
+        data.append(service_days)
+
+        service_months=self.cleaned_data.get("service_months")
+        data.append(service_months)
+
+        service_years=self.cleaned_data.get("service_years")
+        data.append(service_years)
+        
+        excluded_employees=self.cleaned_data.get("excluded_employees")
+
+        entry_date=self.cleaned_data.get("entry_date")
+        for value in data:
+            print(value)
+        for value in range(len(data)):
+            if data[value] is None:
+                data[value]=int(0)
+                
+        
+
+        eligibility_rules,created=models.eligibility_rules.objects.get_or_create(engagement=engagement)
+        eligibility_rules.age=data[0]
+        eligibility_rules.service_hours=data[1]
+        eligibility_rules.service_days=data[2]
+        eligibility_rules.service_months=data[3]
+        eligibility_rules.service_years=data[4]
+        eligibility_rules.entry_date=entry_date
+        eligibility_rules.excluded_employees=excluded_employees
+        eligibility_rules.save()
+    
 
 class CensusFileForm(forms.Form):
     filename=forms.FileField()
@@ -201,6 +274,14 @@ class KeyEmployee(forms.ModelForm):
         model=models.participant
         fields=['key_employee']
         widgets={'key_employee':forms.CheckboxInput}
+
+    def clean(self):
+        key_employee=self.cleaned_data.get("key_employee")
+
+        if key_employee is None:
+            key_employee=False
+
+        return self.cleaned_data
 
 
     
