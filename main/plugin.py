@@ -183,6 +183,8 @@ def generate_selections(engagement):
 
     #Defining the remaining population after excluding our selected Key Employees    
     sample=participants.filter(key_employee=False)
+    print(sample)
+    print(participants)
 
     #Defining the date range of engagement to lookback on for making selections
     engagements=models.engagement.objects.filter(date__range=[(engagement.date-relativedelta(years=3)), engagement.date-relativedelta(years=1)])
@@ -220,7 +222,7 @@ def generate_selections(engagement):
 
     
 
-    return number_of_selections
+    return sample
     
 
 

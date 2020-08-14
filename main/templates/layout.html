@@ -45,7 +45,7 @@
                 </strong>{{message}}</div>
         {% endfor %}
     <!--Creating a div container that will hold everything other than the Top Navbar. It is important to make this a fluid class due to implementation of the sidebar on the client dashboard page.-->
-    <div class="container-fluid">
+    <div id="base" class="container-fluid">
             {% block content %} {% endblock content %}
     </div>
     <hr/>

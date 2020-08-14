@@ -66,7 +66,7 @@ class SignUpView(FormView):
     form_class=forms.UserCreationForm
     
     def get_success_url(self):
-        redirect_to=reverse_lazy('login')
+        redirect_to=reverse_lazy('home')
         return redirect_to
     
     def form_valid(self,form):
@@ -217,7 +217,7 @@ class EngagementView(TemplateView):
     def get(self,request, slug, Eslug, *args,**kwargs):
 
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         participants = models.participant.objects.filter(engagement=engagement)
         census_form=forms.CensusFileForm()
@@ -233,7 +233,7 @@ class EditEligibility(TemplateView):
     def get(self,request, slug, Eslug, *args,**kwargs):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligiblity_rules=models.eligibility_rules.objects.get(engagement=engagement)
         edit_eligibility_form=forms.EligibilityForm(instance=eligiblity_rules)
         context_object={'form':edit_eligibility_form, "client":client, "engagement":engagement}
@@ -242,6 +242,14 @@ class EditEligibility(TemplateView):
 
     def post(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+
+        form=forms.EligibilityForm(request.POST)
+
+        if form.is_valid():
+            form.save(engagement)
+        '''
         age=request.POST.get('age')
         service_hours=request.POST.get('service_hours')
         service_days=request.POST.get('service_days')
@@ -251,10 +259,10 @@ class EditEligibility(TemplateView):
         entry_date=request.POST.get('entry_date')
     
         
-        engagement=models.engagement.objects.get(slug=Eslug)
-
+        '''
         client=models.client.objects.get(slug=slug)
         eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        '''
         eligibility_rules.age=age
         eligibility_rules.service_hours=service_hours
         eligibility_rules.service_days=service_days
@@ -264,6 +272,7 @@ class EditEligibility(TemplateView):
         eligibility_rules.entry_date=entry_date
         eligibility_rules.save()
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
+        '''
         participants=models.participant.objects.filter(engagement=engagement)
         
         if len(participants)>0:
@@ -314,10 +323,12 @@ class KeyEmployee(TemplateView):
     def get(self,request, slug, Eslug, *args,**kwargs):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligiblity_rules=models.eligibility_rules.objects.get(engagement=engagement)
         participants=models.participant.objects.filter(engagement=engagement)
+        '''
         key_employee_form=forms.KeyEmployeeSelectForm(engagement=engagement)
+        '''
         
         FormSet = modelformset_factory(models.participant, form=forms.KeyEmployee,extra=0)
         formset=FormSet(queryset=participants)
@@ -331,16 +342,14 @@ class KeyEmployee(TemplateView):
 
     def post(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
-        FormSet = modelformset_factory(models.participant, form=forms.KeyEmployee)
-        formset=FormSet(request.POST)
-        if formset.is_valid():
-            instance=formset.save()
-        
-        
-    
-        engagement=models.engagement.objects.get(slug=Eslug)
-        participants=models.participant.objects.filter(engagement=engagement)
+        FormSet = modelformset_factory(models.participant, form=forms.KeyEmployee,extra=0)
+        formset=FormSet(request.POST,request.FILES)
+        instance=formset.save()
+
         client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        participants=models.participant.objects.filter(engagement=engagement)
+      
 
 
         eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
@@ -361,7 +370,7 @@ class CensusStatistics(TemplateView):
     def get(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         participants=models.participant.objects.filter(engagement=engagement)
         number_of_employees=models.participant.objects.filter(engagement=engagement).count()
@@ -392,7 +401,7 @@ class MakeSelections(TemplateView):
     def get(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         participants=models.participant.objects.filter(engagement=engagement)
 
@@ -402,13 +411,14 @@ class MakeSelections(TemplateView):
         return JsonResponse(data)
 
     def post(self,request,slug, Eslug,*args,**kwargs):
+        print("working")
         data=dict()
-        engagement=models.engagement.objects.get(slug=Eslug)
         client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
 
         x = plugin.generate_selections(engagement)
-        
+        print(x)
         participants=models.participant.objects.filter(engagement=engagement)
 
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,}
@@ -461,7 +471,7 @@ class ViewSelections(TemplateView):
     def get(self,request,slug,Eslug):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         participants=models.participant.objects.filter(engagement=engagement)
         selections=participants.filter(selection=True).order_by("-contributing")
@@ -477,7 +487,7 @@ class UploadCensus(TemplateView):
     def get(self,request,slug,Eslug):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         form=forms.CensusFileForm()
 
         context_object={"client":client,"form":form,"engagement":engagement}
@@ -487,9 +497,12 @@ class UploadCensus(TemplateView):
 
     def post(self,request,slug,Eslug,*args,**kwargs):
         client=models.client.objects.get(slug=slug)
-        engagement=models.engagement.objects.get(slug=Eslug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         form=forms.CensusFileForm(request.POST, request.FILES)
+        participants=models.participant.objects.filter(engagement=engagement)
+        for instance in participants:
+            instance.delete()
         participants=models.participant.objects.filter(engagement=engagement)
         context={"client":client,"engagement":engagement,"eligibility_rules":eligibility_rules,"form":forms.CensusFileForm,"participants":participants}
 
@@ -612,6 +625,8 @@ class UploadCensus(TemplateView):
             
             if pd.isnull(data.iloc[i,location_dict['ER Catch-up']])==False:
                 participant.ER_catch_up=data.iloc[i,location_dict['ER Catch-up']]
+
+            participant.key_employee=False
             participant.save()
 
             plugin.eligibility(participant,eligibility_rules,engagement)
@@ -719,6 +734,27 @@ def export_selections(request,slug,Eslug):
 
     wb.save(response)
     return response
+
+class PreviousSelections(TemplateView):
+    template_name="py_selections.html"
+
+    def get(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        try:
+            py_engagement=models.engagement.objects.get(client=client,date=engagement.date-relativedelta(years=1))
+        except:
+            py_engagement=None
+
+        py_selections=models.participant.objects.filter(selection=True,engagement=py_engagement).order_by("-contributing")
+
+        context={"client":client,"engagement":engagement,"py_engagement":py_engagement,"selections":py_selections}
+
+        data['html_form']=render_to_string('py_selections.html',context,request=request)
+        return JsonResponse(data)
+
+
 
 
 

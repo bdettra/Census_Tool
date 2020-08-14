@@ -223,7 +223,7 @@ $(document).ready(function () {
                     $('#census_table tbody').html(data.engagements)
 
                     $('#modal-key_employee').modal('hide');
-                    console.log('Working');
+                    console.log('Key Employee Form Saved');
                 }
                 else {
                     $('#modal-key_employee .modal-content').html(data.html_form)
@@ -309,6 +309,29 @@ $(document).ready(function () {
             }
         })
     };
+
+    //Defining the Census Statistics variable
+    var ShowPreviousSeletions = function (){
+        console.log("PY Selections");
+        var btn = $(this);
+
+        $.ajax({
+            
+            url:btn.attr("data-url"),
+
+            type:'get',
+
+            dataType:"json",
+
+            beforeSend: function (){
+                $("#modal-py_selections").modal("show");
+            },
+
+            success: function (data){
+                $("#modal-py_selections .modal-content").html(data.html_form);
+            }
+        })
+    };    
 
     //Defining the View Selection form variable
     var ViewSelections = function (){
@@ -478,6 +501,9 @@ $(document).ready(function () {
 
     //Show Census Statistics
     $(".show-census_statistics-form").click(CensusStatistics);
+
+    //Show PY Selections
+    $(".show-py_selections").click(ShowPreviousSeletions)
 
     //Show Selections
     $(".view-selections_form").click(ViewSelections);

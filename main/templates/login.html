@@ -2,11 +2,11 @@
 
 {% block content %}
 
-<h2>{{ title }}</h2>
+<h2 style="padding-left: 10px;">{{ title }}</h2>
 <div class="row">
     <div class="col-md-8">
         <section id="loginForm">
-            <form action="." method="post" class="form-horizontal">
+            <form action="." method="post" class="form-horizontal" style="padding-left: 10px;">
                 {% csrf_token %}
                 <h4>Use a local account to log in.</h4>
                 <hr />

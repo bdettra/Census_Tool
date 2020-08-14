@@ -1,0 +1,52 @@
+{% block content %}
+{% load crispy_forms_tags %}
+
+
+    <div class="modal-header">
+        {%if py_engagement %}
+        <h5 class="modal-title">{{py_engagement.date}} Census Selections</h5>
+        {% else %}
+        <h5 class="modal-title">No previous year selection data exist</h5>
+        {% endif %}
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        
+    </div>
+
+    <div class="modal-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h2 class="test-center">Contributing</h2>
+                <ul class="list-group list-group-flush">
+                    {% for selection in selections %}
+                        {% if selection.contributing %}
+                    <li class="list-group-item">{{forloop.counter}}.) {{selection.first_name}} {{selection.last_name}}{% if selection.key_employee %} - <strong>Key Employee</strong> {% endif %}</li>
+                        {% endif %}
+                    {% endfor %}
+                <ul>
+            </div>
+            <div class="col-md-6">
+                <h2 class="text-center">Non-Contributing</h2>
+                <ul class="list-group list-group-flush">
+                    {% for selection in selections %}
+                        {% if selection.contributing is False %}
+                            <li class="list-group-item">{{forloop.counter}}.) {{selection.first_name}} {{selection.last_name}}{% if selection.key_employee %} - <strong>Key Employee</strong> {% endif %}</li>
+                        {% endif %}
+                    {% endfor %}
+                <ul>
+            </div>
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="location.href='{% url 'export_selections' client.slug engagement.slug %}'">Export to Excel</button>
+
+
+    </div>
+
+
+
+
+{% endblock content %}

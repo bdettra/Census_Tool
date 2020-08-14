@@ -36,5 +36,6 @@ urlpatterns=[
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/view_selections',views.ViewSelections.as_view(),name="view_selections"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/upload_census',views.UploadCensus.as_view(),name="upload_census"), 
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/export_selections',views.export_selections,name="export_selections"),   
+    path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/previous_selections',views.PreviousSelections.as_view(),name="py_selections"),  
     
 ]

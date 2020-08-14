@@ -10,16 +10,47 @@
                 h2, h3 {display:inline;}
             </style>
             <h2>{{client.name}} - </h2><h3>{{engagement.name}}</h3>
-            <div style="padding-top: 20px;" class="row">
-                <div class="btn-group" role="group" aria-label="Basic example" style="padding-left: 10px;">
-                    <button class="btn btn-primary show-form" href="#" data-url="{% url 'edit_eligibility' client.slug engagement.slug %}">Edit Eligiblity Rules</a></button>
-                    <button class="btn btn-info" data-toggle="modal" data-target="#fm-modal-grid">View Eligibility Rules</button>
-                    <button class="btn btn-primary upload-census_form" data-toggle="modal" data-url="{% url 'upload_census' client.slug engagement.slug %}">Upload Census Data</a></button>
-                    <button class="btn btn-info show-key_employee-form" data-url="{% url 'key_employees' client.slug engagement.slug %}">Select Key Employees</a></button>
-                    <button class="btn btn-primary show-census_statistics-form" data-url="{% url 'census_statistics' client.slug engagement.slug %}">Census Statistics</a></button>
-                    <button class="btn btn-info show-selections_form" data-url="{% url 'make_selections' client.slug engagement.slug %}">Make Selections</a></button>  
-                    <button class="btn btn-primary view-selections_form" data-url="{% url 'view_selections' client.slug engagement.slug %}">View Selections</a></button>         
-                </div>        
+        </div>
+    </div>
+    <div class="row">
+        <h4>Year End: {{engagement.date}}</h4>
+    </div>
+
+    <div style="padding-top: 20px;" class="row justify-content-center">
+        <div class="btn-group dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+                Eligibility
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                <li role="presentation"><a class="dropdown-item show-form" href="#" data-url="{% url 'edit_eligibility' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Edit Eligibility</a></li>
+                <li role="presentation"><a data-toggle="modal" data-target="#fm-modal-grid" role="menuitem" tabindex="-1" href="#">View Eligibility</a></li>
+            </ul>
+        </div>
+        <div class="btn-group dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+                    Census
+                    <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                <li role="presentation"><a class="dropdown-item upload-census_form" href="#" data-url="{% url 'upload_census' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Upload Census</a></li>
+                <li role="presentation"><a class="dropdown-item show-key_employee-form" data-toggle="modal" data-url="{% url 'key_employees' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Select Key Employees</a></li>
+                <li role="presentation"><a class="dropdown-item show-census_statistics-form" data-toggle="modal" data-url="{% url 'census_statistics' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Census Statistics</a></li>                        
+            </ul>
+        </div>                
+        <div class="btn-group dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+                Selections
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                <li role="presentation"><a class="dropdown-item show-selections_form" href="#" data-url="{% url 'make_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Make Selections</a></li>
+                <li role="presentation"><a class="dropdown-item view-selections_form" data-toggle="modal" data-url="{% url 'view_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">View Selections</a></li>
+                <li role="presentation"><a class="dropdown-item show-py_selections" data-toggle="modal" data-url="{% url 'py_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">View Previous Year Selections</a></li>
+            </ul>
+        </div> 
+    </div>
+    <div class="row">
                 <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="census_table">
                     <thead>
                     <th style="width:25%">First Name</th>
@@ -49,11 +80,8 @@
                     <tbody>
                         {% include 'census_list.html' %}
                     </tbody>
-                </table>                
-            </div>
-        </div>
-    </div>
-</div>
+                </table>   
+            </div>            
 
 
 <div class="modal fade" id="modal-eligibility_rules">
@@ -84,6 +112,12 @@
         <div class="modal-content"></div>
     </div>
 </div>
+<div class="modal fade" id="modal-py_selections">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
 <div class="modal fade" id="upload_census">
     <div class="modal-dialog">
         <div class="modal-content"></div>
