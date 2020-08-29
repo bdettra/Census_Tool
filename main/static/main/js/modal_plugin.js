@@ -465,11 +465,64 @@ $(document).ready(function () {
         return false;
     };
 
+    var ViewErrors = function (){
+        var btn = $(this);
+        console.log("Working");
+
+        $.ajax({
+            
+            url:btn.attr("data-url"),
+
+            type:'get',
+
+            dataType:"json",
+
+            beforeSend: function (){
+                $("#modal-view_errors").modal("show");
+            },
+
+            success: function (data){
+                $("#modal-view_errors .modal-content").html(data.html_form);
+                console.log("Worked");
+            }
+        })
+    };
+
+    //Defining the Save Key Employee Form variable
+    var SaveErrorsForm = function() {
+        $('.ajaxProgress').show()
+        var form = $(this);
+        console.log("Save Error Form Running")
+        $.ajax({
+
+            url: form.attr('data-url'),
+
+            data: form.serialize(),
+
+            type: form.attr('method'),
+
+            dataType: 'json',
+
+            success: function (data) {
+                if (data.form_is_valid) {
+                    $('.ajaxProgress').hide()
+                    $('#header').html(data.engagements1)
+                    $('#census_table tbody').html(data.engagements)
+
+                    $('#modal-view_errors').modal('hide');
+                    console.log('View Errors Form Saved');
+                }
+                else {
+                    $('#modal-view_errors.modal-content').html(data.html_form)
+                }
+            }
+
+        })
+
+        return false;
+    };
+
     
-
-
-
-
 
     // Create Client
     $(".show-client_form").click(ShowForm);
@@ -525,7 +578,12 @@ $(document).ready(function () {
     $(".show-delete-form").click(ShowDeleteForm);
     $("#modal-delete_client").on("submit",".delete-form", SaveDeleteForm);
 
+    //Show Errors
+    $(".show-view_errors").click(ViewErrors);
 
+    $("#modal-view_errors").on("submit",".view_errors-form",SaveErrorsForm);
+
+    $("td").tooltip({container:'body'});
 
 
 

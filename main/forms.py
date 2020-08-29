@@ -283,6 +283,13 @@ class KeyEmployee(forms.ModelForm):
 
         return self.cleaned_data
 
+class ErrorForm(forms.ModelForm):
+    class Meta:
+        model=models.error
+        fields=['error_message']
+        widgets={"error_message":forms.HiddenInput()}
+    
+
 
     
     

@@ -222,7 +222,13 @@ class EngagementView(TemplateView):
         participants = models.participant.objects.filter(engagement=engagement)
         census_form=forms.CensusFileForm()
 
-        context={'census_form':census_form,'client':client,'engagement':engagement,"eligibility_rules":eligibility_rules,"participants":participants}
+        errors=False
+        for participant in participants:
+            if len(participant.error_set.all())>0:
+                errors=True
+                break
+
+        context={'census_form':census_form,'client':client,'engagement':engagement,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
 
         return render(request,"engagement_page.html",context=context)
 
@@ -506,6 +512,16 @@ class UploadCensus(TemplateView):
         participants=models.participant.objects.filter(engagement=engagement)
         context={"client":client,"engagement":engagement,"eligibility_rules":eligibility_rules,"form":forms.CensusFileForm,"participants":participants}
 
+        py_engagement=False
+        py_participants=None
+        
+        py_engagements=models.engagement.objects.filter(client=client,date__lt=engagement.date)
+
+        if len(py_engagements) > 0 :
+            py_engagement=py_engagements.latest('date')
+            py_participants=models.participant.objects.filter(engagement=py_engagement)
+
+
         data=pd.read_excel(request.FILES['filename'])
         
         columns=data.columns
@@ -556,6 +572,8 @@ class UploadCensus(TemplateView):
                 participant.first_name=data.iloc[i,location_dict['First Name']]
                 participant.save()
             else:
+                error=models.error.objects.create(participant=participant,error_message="First name data is missing")
+                error.save()
                 messages.error(self.request,"One of the participants is missing a First Name Value")
                 
             
@@ -563,17 +581,22 @@ class UploadCensus(TemplateView):
                 participant.last_name=data.iloc[i,location_dict['Last Name']]
                 participant.save()
             else:
+                error=models.error.objects.create(participant=participant,error_message="Last name data is missing")
+                error.save()
                 messages.error(self.request,"One of the participants is missing a Last Name Value")
 
             if pd.isnull(data.iloc[i,location_dict['DOB']])==False:
                 participant.DOB=data.iloc[i,location_dict['DOB']].date()
             else:
+                error=models.error.objects.create(participant=participant,error_message="DOB data is missing")
+                error.save()
                 messages.error(self.request,participant.first_name +" " + participant.last_name + "is missing a DOB value. Census stopped processing at that employee.")
                 return render(request,"engagement_page.html",context=context)
 
             if pd.isnull(data.iloc[i,location_dict['DOH']])==False:
                 participant.DOH=data.iloc[i,location_dict['DOH']].date()
             else:
+                error=models.error.objects.create(participant=participant,error_message="DOH data is missing")
                 messages.error(self.request,participant.first_name +" " + participant.last_name + "is missing a DOH value. Census stopped processing at that employee.")
                 return render(request,"engagement_page.html",context=context)
 
@@ -581,6 +604,7 @@ class UploadCensus(TemplateView):
                 participant.DOT=data.iloc[i,location_dict['DOT']].date()
                 participant.save()
                 if participant.DOT < (engagement.date - relativedelta(years=1)):
+                    error=models.error.objects.create(participant=participant,error_message="DOT is before engagement year")
                     messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
 
             if pd.isnull(data.iloc[i,location_dict['DORH']])==False:
@@ -598,6 +622,7 @@ class UploadCensus(TemplateView):
             if pd.isnull(data.iloc[i,location_dict['Hours Worked']])==False:
                 participant.hours_worked=data.iloc[i,location_dict['Hours Worked']]
             else:
+                error=models.error.objects.create(participant=participant,error_message="Hours worked data is missing")
                 messages.error(self.request,"One of the participants is missing an 'Hours Worked' value")
 
             if pd.isnull(data.iloc[i,location_dict['Gross Wages']])==False:
@@ -629,9 +654,20 @@ class UploadCensus(TemplateView):
             participant.key_employee=False
             participant.save()
 
+
             plugin.eligibility(participant,eligibility_rules,engagement)
             plugin.participating(participant)
             plugin.effective_deferral(participant)
+
+            if py_engagement != False:
+                error_messages=plugin.previous_year_check(participant,py_engagement)
+                for key, value in error_messages.items():
+                    if value != False:
+                        messages.error(self.request,value)
+
+            
+
+            
             
 
 
@@ -641,9 +677,11 @@ class UploadCensus(TemplateView):
                     if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
                         pass
                     else:
+                        models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
                         messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
 
                 else:
+                    models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
                     messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
 
             if participant.excluded == True and participant.participating == True:
@@ -652,10 +690,17 @@ class UploadCensus(TemplateView):
             
 
         participants=models.participant.objects.filter(engagement=engagement)
+
+        errors=False
+        for participant in participants:
+            if len(participant.error_set.all()) > 0:
+                errors=True
+                break
         
 
-        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
 
+        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors,}
+        print(context)
 
         return HttpResponseRedirect(reverse('engagement_page',args=(slug, Eslug)))
 
@@ -754,6 +799,162 @@ class PreviousSelections(TemplateView):
         data['html_form']=render_to_string('py_selections.html',context,request=request)
         return JsonResponse(data)
 
+
+
+class ViewErrors(TemplateView):
+    template_name="view_errors_updated.html"
+
+    def get(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(client=client,slug=Eslug)
+        participants=models.participant.objects.filter(engagement=engagement)
+        errors=models.error.objects.filter(participant__id__in=participants)
+
+        FormSet=modelformset_factory(models.error,forms.ErrorForm,extra=0,can_delete=True)
+        formset=FormSet(queryset=errors)
+        errors=models.error.objects.filter(participant__id__in=participants)
+
+        context={'formset':formset,"census_errors":errors,"client":client,"engagement":engagement,"participants":participants}
+        
+        data['html_form']=render_to_string('view_errors_updated.html',context,request=request)
+
+        return JsonResponse(data)
+    
+    def post(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+        FormSet = modelformset_factory(models.error, forms.ErrorForm,extra=0,can_delete=True)
+        formset=FormSet(request.POST,request.FILES)
+        print("-----------")
+        print([form.cleaned_data for form in formset.deleted_forms])
+        instance=formset.save()
+        
+
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        participants=models.participant.objects.filter(engagement=engagement)
+      
+        eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+
+        errors=False
+        for participant in participants:
+            if len(participant.error_set.all()) > 0:
+                print("Numebr of Errors:" + str(len(participant.error_set.all())))
+                errors=True
+                break
+        
+
+        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
+        
+        if errors==False:
+            return HttpResponseRedirect(reverse('engagement_page',args=(slug, Eslug)))
+
+        data['engagements1']=render_to_string('census_header.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
+        data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
+        data['form_is_valid']=True
+        data['html_form']=render_to_string('view_errors_updated.html',context,request=request)
+
+        return JsonResponse(data) 
+
+
+
+
+@login_required  
+def export_errors(request,slug,Eslug):
+    print('Working')
+
+    client=models.client.objects.get(slug=slug)
+
+    engagement=models.engagement.objects.get(slug=Eslug)
+
+    participants=models.participant.objects.filter(engagement=engagement)
+
+    errors=models.error.objects.filter(participant__id__in=participants)
+
+    response=HttpResponse(content_type='application/ms-excel')
+
+    response['Content-Disposition'] = 'attachemnt; filename="Census_Errors.xls"'
+
+    #creating workbook
+    wb = xlwt.Workbook(encoding="utf-8")
+
+	#adding sheet
+    ws = wb.add_sheet("Errors")
+
+	# Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    # headers are bold
+    font_style.font.bold = True
+
+	#column header names, you can use your own headers here
+    columns = ['Selection #', 'First Name', 'Last Name', 'SSN','DOB','DOH','DOT','DORH','Excluded','Gross Wages','Eligible Wages','Hours Worked',
+    'Employee Pre-Tax', 'Employer Pre-Tax','Employee Roth','Employer Roth','Employee Catch-Up',
+    'Employer Catch-Up','Effective Deferral %','Error Message' ]
+
+	#write column headers in sheet
+    for col_num in range(len(columns)):
+	    ws.write(row_num, col_num, columns[col_num], font_style)
+
+	# Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+    date_xf = xlwt.easyxf(num_format_str='MM/DD/YYYY')
+    
+    currency_format = xlwt.XFStyle()
+    currency_format.num_format_str = '$#,##0.00'
+    number_format=xlwt.XFStyle()
+    number_format.number_format_str = "#,##0.00"
+
+    percentage_format=xlwt.XFStyle()
+    percentage_format.number_format_str='0.00%'
+
+	#get your data, from database or from a text file...
+    for error in errors:
+        row_num = row_num + 1
+        ws.write(row_num, 0, row_num, font_style)
+        ws.write(row_num, 1, error.participant.first_name, font_style)
+        ws.write(row_num, 2, error.participant.last_name, font_style)
+        ws.write(row_num, 3, error.participant.SSN, font_style)
+        ws.write(row_num, 4, error.participant.DOB, date_xf)
+        ws.write(row_num, 5, error.participant.DOH, date_xf)
+        ws.write(row_num, 6, error.participant.DOT, date_xf)
+        ws.write(row_num, 7, error.participant.DORH,date_xf)
+        ws.write(row_num, 8, error.participant.excluded, font_style)
+        ws.write(row_num, 9, error.participant.gross_wages, currency_format)
+        ws.write(row_num, 10, error.participant.eligible_wages, currency_format)
+        ws.write(row_num, 11, error.participant.hours_worked, number_format)
+        ws.write(row_num, 12, error.participant.EE_pre_tax_amount, currency_format)
+        ws.write(row_num, 13, error.participant.ER_pre_tax_amount, currency_format)
+        ws.write(row_num, 14, error.participant.EE_roth_amount, currency_format)
+        ws.write(row_num, 15, error.participant.ER_roth_amount, currency_format)
+        ws.write(row_num, 16, error.participant.EE_catch_up, currency_format)
+        ws.write(row_num, 17, error.participant.ER_catch_up, currency_format)
+        ws.write(row_num, 18, error.participant.effective_deferral_percentage, percentage_format)
+        ws.write(row_num, 19, error.error_message, font_style)
+
+    wb.save(response)
+    return response
+
+
+
+
+'''
+class ParticipantView(TemplateView):
+    template_name="participant_page.html"
+
+
+    def get(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+
+        return JsonResponse(data)
+
+    def post(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+
+        return JsonResponse(data)
+'''
 
 
 

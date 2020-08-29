@@ -34,7 +34,7 @@
                         </div>
                     {% elif forloop.counter > 50 %}
                         <div class="col-md-4">
-                            {{forloop.counter}}
+                            {{forloop.counter}}.)
                             {{form.instance.first_name}} {{ form.instance.last_name}} 
                             {% for field in form %}
                                 {% if field.errors %}

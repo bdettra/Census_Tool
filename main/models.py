@@ -104,6 +104,61 @@ class participant(models.Model):
     def __str__(self):
         return self.first_name +" "+ self.last_name
 
+class error(models.Model):
+    CHOICES=(
+        ("First name data is missing","First name data is missing"),
+        ("First name data does not match previous year census","First name data does not match previous year census"),
+        ("Last name data is missing","Last name data is missing"),
+        ("Last name data does not match previous year census","Last name data does not match previous year census"),
+        ("Social Security Number data is missing","Social Security Number data is missing"),
+        ("DOB data is missing","DOB data is missing"),
+        ("DOB data does not match previous year census","DOB data does not match previous year census"),
+        ("DOH data is missing","DOH data is missing"),
+        ("DOH data does not match previous year census","DOH data does not match previous year census"),
+        ("DOT is before engagement year","DOT is before engagement year"),
+        ("DOT data does not match previous year census","DOT data does not match previous year census"),
+        ("DORH data does not match previous year census","DORH data does not match previous year census"),
+        ("Hours worked data is missing","Hours worked data is missing"),
+        ("Contribution amount is over IRS limit","Contribution amount is over IRS limit"),
+        ("Catch-up contribution amount is over IRS limit","Catch-up contribution amount is over IRS limit"),
+        ("Employee is ineligible and is participating","Employee is ineligible and is participating")
+    )
+    error_message=models.CharField(choices=CHOICES,max_length=100,null=True)
+    participant=models.ForeignKey(participant,on_delete=models.CASCADE)
+
+    '''
+    first_name=models.BooleanField(blank=True,null=True)
+    last_name=models.BooleanField(blank=True,null=True)
+    SSN=models.BooleanField(blank=True,null=True)
+    DOB=models.BooleanField(blank=True,null=True)
+    DOH=models.BooleanField(blank=True,null=True)
+    DOT=models.BooleanField(blank=True,null=True)
+    DORH=models.BooleanField(blank=True,null=True)
+    hours_worked=models.BooleanField(blank=True,null=True)
+    deferral=models.BooleanField(blank=True,null=True)
+    catch_up=models.BooleanField(blank=True,null=True)
+    eligible=models.BooleanField(blank=True,null=True)
+    participating=models.BooleanField(blank=True,null=True)
+    contributing=models.BooleanField(blank=True,null=True)
+    participant=models.ForeignKey(participant,on_delete=models.CASCADE)
+    '''
+
+
+#class comparison_error(models.Model):
+
+
+    #first_name=models.BooleanField(blank=True,null=True)
+    #last_name=models.BooleanField(blank=True,null=True)
+    #SSN=models.BooleanField(blank=True,null=True)
+    #DOB=models.BooleanField(blank=True,null=True)
+    #DOH=models.BooleanField(blank=True,null=True)
+    #DOT=models.BooleanField(blank=True,null=True)
+    #DORH=models.BooleanField(blank=True,null=True)
+    #participant=models.ForeignKey(participant,on_delete=models.CASCADE)
+
+
+
+
     
 
 

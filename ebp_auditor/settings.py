@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'django.contrib.humanize',
     'widget_tweaks',
+    'main.templatetags.errors_extra',
 ]
 
 MIDDLEWARE = [

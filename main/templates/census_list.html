@@ -1,29 +1,154 @@
 {% load l10n %}
 {% load humanize %}
+{% load errors_extra %}
 
 {% for participant in participants %}
 <tr>
-    <td>
-        {{participant.first_name}}
-    </td>
-    <td>
-        {{participant.last_name}}
-    </td>
+    {% if errors %}
+        {% if participant.error_set.all|length > 0 %}
+            <td style="text-align:center; background-color:#F08080">
+                <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+            </td>
+        {% else %}
+            <td style="text-align:center">
+                <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+            </td>
+        {% endif %}
+    {% endif %}
+    
+    
+ 
+
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"First name data is missing" == True or participant.error_set.all|find:"First name data does not match previous year census" == True %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "First name data is missing" or error.error_message == "First name data does not match previous year census" %}
+                    <td style="background-color:#F08080" data-toggle="tooltip" data-placement="auto" title="{{error.error_message}}">
+                        {{participant.first_name}}
+                    </td>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <td>
+                {{participant.first_name}}
+            </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {{participant.first_name}}
+        </td>
+    {% endif %}
+    
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"Last name data is missing" == True or participant.error_set.all|find:"Last name data does not match previous year census" == True %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "Last name data is missing" or error.error_message == "Last name data does not match previous year census" == True %}
+                    <td style="background-color:#F08080" data-toggle="tooltip" data-placement="auto" title="{{error.error_message}}">
+                        {{participant.last_name}}
+                    </td>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <td>
+                {{participant.last_name}}
+            </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {{participant.last_name}}
+        </td>
+    {% endif %}
+    
     <td>
         {{participant.SSN}}
     </td>
-    <td>
-        {{participant.DOB}}
-    </td>
-    <td>
-        {{participant.DOH}}
-    </td>
-    <td>
-        {{participant.DOT}}
-    </td>
-    <td>
-        {{participant.DORH}}
-    </td>
+
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"DOB data is missing" or participant.error_set.all|find:"DOB data does not match previous year census" %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "DOB data is missing" or error.error_message == "DOB data does not match previous year census" %}
+                    <td style="background-color:#F08080" data-toggle="tooltip" data-placement="top" title="{{error.error_message}}">
+                        {{participant.DOB}}
+                    </td>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <td>
+                {{participant.DOB}}
+            </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {{participant.DOB}}
+        </td>
+    {% endif %}
+
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"DOH data is missing" or participant.error_set.all|find:"DOH data does not match previous year census" %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "DOH data is missing" or error.error_message == "DOH data does not match previous year census" %}
+                <td style="background-color:#F08080" data-toggle="tooltip" data-placement="top" title="{{error.error_message}}">
+                    {{participant.DOH}}
+                </td>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <td>
+                {{participant.DOH}}
+            </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {{participant.DOH}}
+        </td>
+    {% endif %}
+
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"DOT is before engagement year" or participant.error_set.all|find:"DOT data does not match previous year census" %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "DOT is before engagement year" or error.error_message == "DOT data does not match previous year census" %}
+                <td style="background-color:#F08080" data-toggle="tooltip" data-placement="top" title="{{error.error_message}}">
+                    {{participant.DOT}}
+                </td>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <td>
+                {{participant.DOT}}
+            </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {{participant.DOT}}
+        </td>
+    {% endif %}
+
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"DORH data does not match previous year census" %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "DORH data does not match previous year census" %}
+                <td style="background-color:#F08080" data-toggle="tooltip" data-placement="top" title="{{error.error_message}}">
+                    {{participant.DORH}}
+                </td>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <td>
+                {{participant.DORH}}
+            </td>
+        {% endif %}
+
+    {% else %}
+        <td>
+            {{participant.DORH}}
+        </td>
+    {% endif %}
+
     <td style="text-align:center"> 
         {% if participant.excluded %}
             <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
@@ -98,12 +223,43 @@
             <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
         {% endif %}
     </td>
-    <td style="text-align:center">
-        {% if participant.participating %}
-            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+
+    {% if participant.error_set.all|length > 0 %}
+        {% if participant.error_set.all|find:"Employee is ineligible and is participating" %}
+            {% for error in participant.error_set.all %}
+                {% if error.error_message == "Employee is ineligible and is participating" %}
+                    {% if participant.participating %}
+                    <td style="text-align:center; background-color:#F08080" data-toggle="tooltip" data-placement="top" title="{{error.error_message}}">
+                        <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+                    </td>
+                    {% else %}
+                    <td style="text-align:center; background-color:#F08080" data-toggle="tooltip" data-placement="top" title="{{error.error_message}}"></td>
+                        <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+                    </td>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
         {% else %}
-            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+            {% if participant.participating %}
+            <td style="text-align:center">
+                <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+            </td>
+            {% else %}
+            <td style="text-align:center">
+                <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+            </td>
+            {% endif %}
         {% endif %}
+    {% else %}
+    {% if participant.participating %}
+    <td style="text-align:center">
+        <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
     </td>
+    {% else %}
+    <td style="text-align:center">
+        <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+    </td>
+    {% endif %}
+    {% endif %}
 </tr>
 {% endfor %}

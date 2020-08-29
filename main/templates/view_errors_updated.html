@@ -1,0 +1,47 @@
+{% block content %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+{% load static %}
+
+ 
+<form method="post" data-url="{% url 'view_errors' client.slug engagement.slug %}" class="view_errors-form">
+
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Census Errors</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        <ul class="list-group list-group-flush">
+            {% if census_errors %}
+                {% for form in formset %}
+                <li class="list-group-item">{% for field in form %}{% render_field field %}{% endfor %} {{form.instance.participant.first_name}} {{form.instance.participant.last_name}} - {{form.instance.error_message}}</li>
+                {% endfor %}
+            {% else %}
+                <p>There are no errors in the census</p>
+            {% endif %}
+          </ul>
+    </div>
+
+    <div class="modal-footer">
+       
+        <button type="submit" class="btn btn-danger">Clear Errors</button>
+        <button type="button" class="btn btn-primary" onclick="location.href='{% url 'export_errors' client.slug engagement.slug %}'">Export to Excel</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+    </div>
+
+
+</form>
+
+{% endblock content %}
+
+<div class="ajaxProgress">
+    <h3>Loading</h3>
+    <img src="{% static 'main/images/ajax-loader.gif' %}" alt="loading"/>
+</div>

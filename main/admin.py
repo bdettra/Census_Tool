@@ -29,6 +29,10 @@ class ParticipantAdmin(admin.ModelAdmin):
     "effective_deferral_percentage","selection","key_employee","eligible",
     "participating","engagement","id",)
 
+class ErrorAdmin(admin.ModelAdmin):
+    model=models.error
+    list_display=("error_message",'participant')
+
 
 class UserAdmin(DjangoUserAdmin):
     fieldsets=(
@@ -108,3 +112,4 @@ main_admin.register(models.client,ClientAdmin)
 main_admin.register(models.engagement,EngagementAdmin)
 main_admin.register(models.eligibility_rules,EligibilityRules)
 main_admin.register(models.participant,ParticipantAdmin)
+main_admin.register(models.error,ErrorAdmin)

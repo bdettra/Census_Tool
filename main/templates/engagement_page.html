@@ -35,7 +35,8 @@
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
                 <li role="presentation"><a class="dropdown-item upload-census_form" href="#" data-url="{% url 'upload_census' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Upload Census</a></li>
                 <li role="presentation"><a class="dropdown-item show-key_employee-form" data-toggle="modal" data-url="{% url 'key_employees' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Select Key Employees</a></li>
-                <li role="presentation"><a class="dropdown-item show-census_statistics-form" data-toggle="modal" data-url="{% url 'census_statistics' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Census Statistics</a></li>                        
+                <li role="presentation"><a class="dropdown-item show-census_statistics-form" data-toggle="modal" data-url="{% url 'census_statistics' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">Census Statistics</a></li>
+                <li role="presentation"><a class="dropdown-item show-view_errors" data-toggle="modal" data-url="{% url 'view_errors' client.slug engagement.slug %}" role="menuitem" tabindex="-1" href="#">View Errors</a></li>                         
             </ul>
         </div>                
         <div class="btn-group dropdown">
@@ -52,30 +53,8 @@
     </div>
     <div class="row">
                 <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="census_table">
-                    <thead>
-                    <th style="width:25%">First Name</th>
-                    <th style="width:50%">Last Name</th>
-                    <th style="width:50%">Social Security #</th>
-                    <th style="width:50%">DOB</th>
-                    <th style="width:50%">DOH</th>
-                    <th style="width:50%">DOT</th>
-                    <th style="width:50%">DORH</th>
-                    <th style="width:50%">Excluded</th>
-                    <th style="width:50%">Gross Wages</th>
-                    <th style="width:50%">Eligible Wages</th>
-                    <th style="width:50%">Hours Worked</th>
-                    <th style="width:50%">Employee Pre Tax Deferral</th>
-                    <th style="width:50%">Employer Pre Tax Deferral</th>
-                    <th style="width:50%">Employee Roth Deferral</th>
-                    <th style="width:50%">Employer Roth Deferral</th>
-                    <th style="width:50%">Employee Catch-up</th>
-                    <th style="width:50%">Employer Catch-up</th>
-                    <th style="width:50%">Effective Deferral</th>
-                    <th style="width:50%">Selection</th>
-                    <th style="width:50%">Key Employee</th>
-                    <th style="width:50%">Eligible</th>
-                    <th style="width:50%">Participating</th>
-
+                    <thead id="header">
+                        {% include 'census_header.html' %}
                     </thead>
                     <tbody>
                         {% include 'census_list.html' %}
@@ -119,6 +98,12 @@
 </div>
 
 <div class="modal fade" id="upload_census">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-view_errors">
     <div class="modal-dialog">
         <div class="modal-content"></div>
     </div>

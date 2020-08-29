@@ -1,0 +1,35 @@
+{% block content %}
+{% load crispy_forms_tags %}
+
+
+    <div class="modal-header">
+        <h5 class="modal-title">Census Errors</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        <ul class="list-group list-group-flush">
+            {% if census_errors %}
+                {% for error in census_errors %}
+                <li class="list-group-item">{{error.participant.first_name}} {{error.participant.last_name}} - {{error.error_message}}</li>
+                {% endfor %}
+            {% else %}
+                <p>There are no errors in the census</p>
+            {% endif %}
+          </ul>
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="location.href='{% url 'export_errors' client.slug engagement.slug %}'">Export to Excel</button>
+
+
+    </div>
+
+
+
+
+{% endblock content %}
