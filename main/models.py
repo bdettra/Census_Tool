@@ -93,6 +93,8 @@ class participant(models.Model):
     ER_roth_amount=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
     EE_catch_up=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
     ER_catch_up=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    total_EE_deferral=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
+    total_ER_deferral=models.FloatField(blank=True,null=True,validators=[MinValueValidator(0)])
     effective_deferral_percentage=models.FloatField(blank=True,null=True)
     selection=models.BooleanField(blank=True,null=True)
     key_employee=models.BooleanField(blank=True,null=True)
@@ -100,6 +102,7 @@ class participant(models.Model):
     participating=models.BooleanField(blank=True,null=True)
     contributing=models.BooleanField(blank=True,null=True)
     engagement=models.ForeignKey(engagement,on_delete=models.CASCADE)
+
 
     def __str__(self):
         return self.first_name +" "+ self.last_name
@@ -121,40 +124,20 @@ class error(models.Model):
         ("Hours worked data is missing","Hours worked data is missing"),
         ("Contribution amount is over IRS limit","Contribution amount is over IRS limit"),
         ("Catch-up contribution amount is over IRS limit","Catch-up contribution amount is over IRS limit"),
-        ("Employee is ineligible and is participating","Employee is ineligible and is participating")
+        ("Employee is ineligible and is participating","Employee is ineligible and is participating"),
+        ("Eligible wages are greater than IRS limit","Eligible wages are greater than IRS limit"),
+        ("Employee contributions are greater than IRS limit","Employee contributions are greater than IRS limit"),
+        ("Employee is not eligible for catch-up contributions","Employee is not eligible for catch-up contributions"),
+        ("Employee is excluded but is participating","Employee is excluded but is particiapting"),
     )
     error_message=models.CharField(choices=CHOICES,max_length=100,null=True)
     participant=models.ForeignKey(participant,on_delete=models.CASCADE)
 
-    '''
-    first_name=models.BooleanField(blank=True,null=True)
-    last_name=models.BooleanField(blank=True,null=True)
-    SSN=models.BooleanField(blank=True,null=True)
-    DOB=models.BooleanField(blank=True,null=True)
-    DOH=models.BooleanField(blank=True,null=True)
-    DOT=models.BooleanField(blank=True,null=True)
-    DORH=models.BooleanField(blank=True,null=True)
-    hours_worked=models.BooleanField(blank=True,null=True)
-    deferral=models.BooleanField(blank=True,null=True)
-    catch_up=models.BooleanField(blank=True,null=True)
-    eligible=models.BooleanField(blank=True,null=True)
-    participating=models.BooleanField(blank=True,null=True)
-    contributing=models.BooleanField(blank=True,null=True)
-    participant=models.ForeignKey(participant,on_delete=models.CASCADE)
-    '''
+    def __str__(self):
+        return self.error_message
+    
 
 
-#class comparison_error(models.Model):
-
-
-    #first_name=models.BooleanField(blank=True,null=True)
-    #last_name=models.BooleanField(blank=True,null=True)
-    #SSN=models.BooleanField(blank=True,null=True)
-    #DOB=models.BooleanField(blank=True,null=True)
-    #DOH=models.BooleanField(blank=True,null=True)
-    #DOT=models.BooleanField(blank=True,null=True)
-    #DORH=models.BooleanField(blank=True,null=True)
-    #participant=models.ForeignKey(participant,on_delete=models.CASCADE)
 
 
 

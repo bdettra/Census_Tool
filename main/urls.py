@@ -39,6 +39,7 @@ urlpatterns=[
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/previous_selections',views.PreviousSelections.as_view(),name="py_selections"), 
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/view_errors',views.ViewErrors.as_view(),name="view_errors"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/export_errors',views.export_errors,name="export_errors"),
+    path('dashboard/<slug:slug>/<slug:Eslug>/participants',views.ParticipantAPI.as_view(),name="participantsAPI"),
     #path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/<int:pk>',views.PreviousSelections.as_view(),name="py_selections"),  
     
 ]

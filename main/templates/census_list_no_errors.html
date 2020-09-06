@@ -1,0 +1,154 @@
+{% load l10n %}
+{% load humanize %}
+{% load errors_extra %}
+<tr>
+    <td>
+        {{participant.first_name}}
+    </td>
+
+    <td>
+
+        {{participant.last_name}}
+    </td>
+
+    <td>
+        {{participant.SSN}}
+    </td>
+
+    <td>
+        {{participant.DOB}}
+    </td>
+
+    <td>
+        {{participant.DOH}}
+    </td>
+
+    <td>
+        {{participant.DOT}}
+    </td>
+
+    <td>
+        {{participant.DORH}}
+    </td>
+
+
+
+    <td style="text-align:center"> 
+        {% if participant.excluded %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+
+
+    <td>
+    {% if participant.gross_wages == 0 %}
+        -
+    {% else %}
+        {{participant.gross_wages}}
+    {% endif %}
+    </td>
+
+    <td>
+        {% if participant.eligible_wages == 0 %}
+            -
+        {% else %}
+            {{participant.eligible_wages}}
+        {% endif %}
+    </td>
+
+
+    <td>
+        {% if participant.hours_worked == 0 %}
+            -
+        {% else %}
+            {{participant.hours_worked}}
+        {% endif %}
+    </td>
+
+
+    <td>
+        {{participant.EE_pre_tax_amount}}
+    </td>
+
+    <td>
+        {{participant.EE_roth_amount}}
+    </td>
+
+    <td style="text-align:center">
+        {% if participant.EE_catch_up == 0 %}
+        -
+        {% else %}
+            {{participant.EE_catch_up}}
+        {% endif %}
+    </td>
+
+    <td style="text-align:center">
+        {% if participant.total_EE_deferral == 0 %}
+        -
+        {% else %}
+            {{participant.total_EE_deferral}}
+        {% endif %}
+    </td>
+
+    <td>
+        {{participant.ER_pre_tax_amount}}
+    </td>
+
+    <td>
+        {{participant.ER_roth_amount}}
+    </td>
+
+    <td style="text-align:center;">
+        {% if participant.ER_catch_up == 0 %}
+            -
+        {% else %}
+            {{participant.ER_catch_up}}
+        {% endif %}
+    </td>
+
+    <td>
+        {{participant.total_ER_deferral}}
+    </td>
+
+    <td>
+        {{participant.effective_deferral_percentage | floatformat:2}} % 
+    </td>
+
+    <td style="text-align:center;">
+    {% if participant.selection %}
+        <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+    {% else %}
+        <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+    {% endif %}
+    </td>
+
+    <td style="text-align:center;">
+        {% if participant.key_employee %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+
+
+
+    <td style="text-align:center;">
+        {% if participant.eligible %}
+            <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+        {% else %}
+            <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+        {% endif %}
+    </td>
+    
+    {% if participant.participating %}
+    <td style="text-align:center;">
+        <i class="fa fa-check" aria-hidden="true" style="color:green"></i>
+    </td>
+    {% else %}
+    <td style="text-align:center">
+        <i class="fa fa-times" aria-hidden="true" style="color:red"></i>
+    </td>
+    {% endif %}
+</tr>

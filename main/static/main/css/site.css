@@ -54,5 +54,13 @@ input[type="checkbox"].input-validation-error {
     left: 30%;
 }
 
+.error {
+    background-color: #F08080;
+}
+
+.row-error {
+    background-color:#ffff80;
+}
+
 
 

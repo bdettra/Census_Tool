@@ -1,5 +1,6 @@
 $(document).ready(function () {
     //Defining the Show Engagement Form Variable
+
     var ShowEngagementForm = function () {
         var btn = $(this);
 
@@ -139,7 +140,8 @@ $(document).ready(function () {
                 if (data.form_is_valid) {
                     $('.ajaxProgress').hide();
                     $('#fm-modal-grid .modal-body').html(data.engagements);
-                    $('#census_table tbody').html(data.engagements1);
+                    const newLocal = '#census_table tbody';
+                    $(newLocal).html(data.engagements1);
                     $('#modal-eligibility_rules').modal('hide');
 
                     
@@ -224,6 +226,7 @@ $(document).ready(function () {
 
                     $('#modal-key_employee').modal('hide');
                     console.log('Key Employee Form Saved');
+                    console.log(data.engagements)
                 }
                 else {
                     $('#modal-key_employee .modal-content').html(data.html_form)
@@ -276,6 +279,7 @@ $(document).ready(function () {
                     $('#census_table tbody').html(data.engagements)
 
                     $('#modal-selections').modal('hide');
+                    console.log("Save Selections worked");
                 }
                 else {
                     $('#modal-selections .modal-content').html(data.html_form)
@@ -505,12 +509,12 @@ $(document).ready(function () {
 
             success: function (data) {
                 if (data.form_is_valid) {
-                    $('.ajaxProgress').hide()
-                    $('#header').html(data.engagements1)
+                    $('.ajaxProgress').hide();
+                
+                    
                     $('#census_table tbody').html(data.engagements)
 
                     $('#modal-view_errors').modal('hide');
-                    console.log('View Errors Form Saved');
                 }
                 else {
                     $('#modal-view_errors.modal-content').html(data.html_form)
@@ -573,6 +577,9 @@ $(document).ready(function () {
     //Update Engagement List
     $('#engagement_list').on("click", ".show-form-update", ShowEngagementForm)
     $("#modal-new_engagement").on("submit", ".update-form", SaveEngagementForm);
+
+    //Update Census Table
+    $('#census_list').on("click")
 
     //Delete Engagement
     $(".show-delete-form").click(ShowDeleteForm);

@@ -258,6 +258,33 @@ def previous_year_check(participant,py_engagement):
 
     return error_dict
 
+def contribution_check(participant,engagement):
+    if participant.EE_pre_tax_amount + participant.EE_roth_amount > int(19500):
+        error=models.error.objects.create(error_message="Employee contributions are greater than IRS limit",participant=participant)
+        error.save()
+        #messages.error(self.request,participant.first_name + " " + participant.last_name + " controbitons are greater than the IRS limit")
+
+    age = engagement.date - participant.DOB
+    age=((age.days)/365) 
+
+    if participant.EE_catch_up > int(6000):
+        error=models.error.objects.create("Catch-up contributions amount is over IRS limit",participant=participant)
+        error.save()
+        #messages.error(self.request,participant.first_name + " " + participant.last_name + " catch-up controbitons are greater than the IRS limit")
+
+    if age < 50 and (participant.EE_catch_up + participant.ER_catch_up) > 0:
+        error=models.error.objects.create(error_message="Employee is not eligible for catch-up contributions",participant=participant)
+        error.save()
+        #messages.error(self.request,participant.first_name + " " + participant.last_name + " is not eligible for catch-up contributions")
+
+def eligible_wages_check(participant,engagement):
+    if participant.eligible_wages > int(280000):
+        error=models.error.objects.create(error_message="Eligible wages are greater than IRS limit",participant=participant)
+        error.save()
+       #messages.error(self.request,participant.first_name + " " + participant.last_name + " eligible wages are over IRS limit")
+
+
+
 
 
     

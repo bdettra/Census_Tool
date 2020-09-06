@@ -11,7 +11,9 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic.base import TemplateView
 from django.template.loader import render_to_string
 from django.utils.text import slugify
-import re
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.renderers import TemplateHTMLRenderer
 import pandas as pd
 from . import plugin
 from dateutil.relativedelta import relativedelta
@@ -19,6 +21,9 @@ from django.forms import modelformset_factory
 from django.forms import formset_factory
 from django.db.models import Avg, StdDev
 import xlwt
+from rest_framework import generics
+from . import serializer
+import re
 
 
 def home(request):
@@ -359,10 +364,17 @@ class KeyEmployee(TemplateView):
 
 
         eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        errors=False
+        for participant in participants:
+            if len(participant.error_set.all()) > 0:
+                print("Numebr of Errors:" + str(len(participant.error_set.all())))
+                errors=True
+                break
 
-        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,}
 
-        data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client']},request=request)
+        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
+
+        data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
         
         data['form_is_valid']=True
         data['html_form']=render_to_string('key_employee.html',context,request=request)
@@ -394,8 +406,9 @@ class CensusStatistics(TemplateView):
         number_selections=participants.filter(selection=True).count()
         number_of_cont_selections=participants.filter(selection=True,contributing=True).count()
         number_of_non_cont_selections=participants.filter(selection=True,contributing=False).count()
+        number_of_errors=models.error.objects.filter(participant__id__in=participants).count()
 
-        context_object={"number_of_non_cont_selections":number_of_non_cont_selections,"number_of_cont_selections":number_of_cont_selections,"number_of_selections":number_selections,"lowest_earner":lowest_earner,"top_earner":top_earner,"standard_dev_wages":standard_dev_wages,"key_employees":key_employees,"employees_terminated":employees_terminated,"average_gross_wages":average_gross_wages,"ineligible":ineligible,"eligible":eligible,"non_contributing_employees":non_contributing_employees,"contributing_employees":contributing_employees,"number_of_employees":number_of_employees,"participants":participants, "client":client, "engagement":engagement,"eligibility_rules":eligibility_rules,}
+        context_object={"number_of_errors":number_of_errors,"number_of_non_cont_selections":number_of_non_cont_selections,"number_of_cont_selections":number_of_cont_selections,"number_of_selections":number_selections,"lowest_earner":lowest_earner,"top_earner":top_earner,"standard_dev_wages":standard_dev_wages,"key_employees":key_employees,"employees_terminated":employees_terminated,"average_gross_wages":average_gross_wages,"ineligible":ineligible,"eligible":eligible,"non_contributing_employees":non_contributing_employees,"contributing_employees":contributing_employees,"number_of_employees":number_of_employees,"participants":participants, "client":client, "engagement":engagement,"eligibility_rules":eligibility_rules,}
         data['html_form']=render_to_string('census_statistics.html',context_object,request=request)
         return JsonResponse(data)
 
@@ -426,8 +439,13 @@ class MakeSelections(TemplateView):
         x = plugin.generate_selections(engagement)
         print(x)
         participants=models.participant.objects.filter(engagement=engagement)
+        errors=False
+        for participant in participants:
+            if len(participant.error_set.all()) > 0:
+                errors=True
+                break
 
-        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,}
+        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
 
         data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client']},request=request)
         
@@ -651,6 +669,9 @@ class UploadCensus(TemplateView):
             if pd.isnull(data.iloc[i,location_dict['ER Catch-up']])==False:
                 participant.ER_catch_up=data.iloc[i,location_dict['ER Catch-up']]
 
+            participant.total_EE_deferral= participant.EE_pre_tax_amount + participant.EE_roth_amount + participant.EE_catch_up
+            participant.total_ER_deferral= participant.ER_pre_tax_amount + participant.ER_roth_amount + participant.ER_catch_up
+
             participant.key_employee=False
             participant.save()
 
@@ -665,7 +686,9 @@ class UploadCensus(TemplateView):
                     if value != False:
                         messages.error(self.request,value)
 
-            
+            #Checking for Contribution & Wage Errors
+            plugin.contribution_check(participant,engagement)
+            plugin.eligible_wages_check(participant,engagement)
 
             
             
@@ -678,6 +701,7 @@ class UploadCensus(TemplateView):
                         pass
                     else:
                         models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
+                        participant.save()
                         messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
 
                 else:
@@ -700,7 +724,6 @@ class UploadCensus(TemplateView):
 
 
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors,}
-        print(context)
 
         return HttpResponseRedirect(reverse('engagement_page',args=(slug, Eslug)))
 
@@ -826,8 +849,6 @@ class ViewErrors(TemplateView):
         data=dict()
         FormSet = modelformset_factory(models.error, forms.ErrorForm,extra=0,can_delete=True)
         formset=FormSet(request.POST,request.FILES)
-        print("-----------")
-        print([form.cleaned_data for form in formset.deleted_forms])
         instance=formset.save()
         
 
@@ -847,10 +868,7 @@ class ViewErrors(TemplateView):
 
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
         
-        if errors==False:
-            return HttpResponseRedirect(reverse('engagement_page',args=(slug, Eslug)))
 
-        data['engagements1']=render_to_string('census_header.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
         data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
         data['form_is_valid']=True
         data['html_form']=render_to_string('view_errors_updated.html',context,request=request)
@@ -936,6 +954,18 @@ def export_errors(request,slug,Eslug):
 
     wb.save(response)
     return response
+
+class ParticipantAPI(generics.ListAPIView):
+    serializer_class=serializer.ParticipantSerializer
+
+    def get_queryset(self):
+        print(self.kwargs)
+        client=models.client.objects.get(slug=self.kwargs['slug'])
+        engagement=models.engagement.objects.get(slug=self.kwargs['Eslug'])
+        participants=models.participant.objects.filter(engagement=engagement)
+        
+        return participants
+        
 
 
 

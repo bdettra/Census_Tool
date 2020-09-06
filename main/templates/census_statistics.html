@@ -25,7 +25,9 @@
             <li class="list-group-item"><strong># of Selections: </strong>{{number_of_selections}}</li>
             <li class="list-group-item"><strong># of Contributing Selections: </strong>{{number_of_cont_selections}}</li>
             <li class="list-group-item"><strong># of Non-Contributing Selections: </strong>{{number_of_non_cont_selections}}</li>
-
+            {% if number_of_errors > 0 %}
+                <li style="background-color:#F08080" class="list-group-item"><strong># of Errors in Cenus: </strong>{{number_of_errors}}</li>
+            {% endif %}
     </div>
 
     <div class="modal-footer">
