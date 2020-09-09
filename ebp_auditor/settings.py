@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'main.templatetags.errors_extra',
     'rest_framework',
+    'datatableview',
 ]
 
 MIDDLEWARE = [

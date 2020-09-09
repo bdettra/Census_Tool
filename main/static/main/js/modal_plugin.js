@@ -140,8 +140,9 @@ $(document).ready(function () {
                 if (data.form_is_valid) {
                     $('.ajaxProgress').hide();
                     $('#fm-modal-grid .modal-body').html(data.engagements);
-                    const newLocal = '#census_table tbody';
-                    $(newLocal).html(data.engagements1);
+                    //const newLocal = '#census_table tbody';
+                    //$(newLocal).html(data.engagements1);
+                    $('#census_table').DataTable().ajax.reload();
                     $('#modal-eligibility_rules').modal('hide');
 
                     
@@ -222,8 +223,8 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.form_is_valid) {
                     $('.ajaxProgress').hide()
-                    $('#census_table tbody').html(data.engagements)
-
+                    //$('#census_table tbody').html(data.engagements)
+                    $('#census_table').DataTable().ajax.reload();
                     $('#modal-key_employee').modal('hide');
                     console.log('Key Employee Form Saved');
                     console.log(data.engagements)
@@ -276,7 +277,7 @@ $(document).ready(function () {
 
             success: function (data) {
                 if (data.form_is_valid) {
-                    $('#census_table tbody').html(data.engagements)
+                    $('#census_table').DataTable().ajax.reload();
 
                     $('#modal-selections').modal('hide');
                     console.log("Save Selections worked");
@@ -512,7 +513,7 @@ $(document).ready(function () {
                     $('.ajaxProgress').hide();
                 
                     
-                    $('#census_table tbody').html(data.engagements)
+                    $('#census_table').DataTable().ajax.reload();
 
                     $('#modal-view_errors').modal('hide');
                 }

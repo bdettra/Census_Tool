@@ -80,7 +80,6 @@
                         <th style="width:50%">Participating</th>
                     </thead>
                     <tbody>
-                        {% include 'census_list.html' %}
                     </tbody>
                 </table>   
             </div>            
@@ -186,6 +185,339 @@
 
 
 {% endblock content %}
+{% block scripts %}
+    <script>
+        $(document).ready(function(){
+            var endpoint="{% url 'participantsAPI' client.slug engagement.slug %}";
+
+            function numberWithCommas(x) {
+                            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            };
+
+            function zeroString(x){
+                if (x==0){
+                    return "-"
+                }
+                else{
+                    return x
+                }
+            };
+
+            function zeroDollar(x){
+                if (x==0){
+                    return "-"
+                }
+                else{
+                    return "$" + x
+                };
+            };
+
+            $('#census_table').DataTable({
+                "processing":true,
+                "serverSide":true,
+                "paging":false,
+                "language":{
+                    "decimal":",",
+                    "thousands":"."
+                },
+                "ajax":{
+                    "url": endpoint,
+                    "dataSrc":'',  
+                },
+                "deferRender": true,
+                "columnDefs":[{
+                    'targets':[7,8,9,10,11,12,13,14,15,16,17,16,18,18,20,21,22,23],
+                    'className':'align-center'
+                    }             
+                ],
+                "rowCallback":function(row,data){
+                    if (data.error_set.length > 0){
+                        $('td:eq(0)',row).css('background-color','#ffff80');
+                        $('td:eq(1)',row).css('background-color','#ffff80');
+                        $('td:eq(2)',row).css('background-color','#ffff80');
+                        $('td:eq(3)',row).css('background-color','#ffff80');
+                        $('td:eq(4)',row).css('background-color','#ffff80');
+                        $('td:eq(5)',row).css('background-color','#ffff80');
+                        $('td:eq(6)',row).css('background-color','#ffff80');
+                        $('td:eq(7)',row).css('background-color','#ffff80');
+                        $('td:eq(8)',row).css('background-color','#ffff80');
+                        $('td:eq(9)',row).css('background-color','#ffff80');
+                        $('td:eq(10)',row).css('background-color','#ffff80');
+                        $('td:eq(11)',row).css('background-color','#ffff80');
+                        $('td:eq(12)',row).css('background-color','#ffff80');
+                        $('td:eq(13)',row).css('background-color','#ffff80');
+                        $('td:eq(14)',row).css('background-color','#ffff80');
+                        $('td:eq(15)',row).css('background-color','#ffff80');
+                        $('td:eq(16)',row).css('background-color','#ffff80');
+                        $('td:eq(17)',row).css('background-color','#ffff80');
+                        $('td:eq(18)',row).css('background-color','#ffff80');
+                        $('td:eq(19)',row).css('background-color','#ffff80');
+                        $('td:eq(20)',row).css('background-color','#ffff80');
+                        $('td:eq(21)',row).css('background-color','#ffff80');
+                        $('td:eq(22)',row).css('background-color','#ffff80');
+                        $('td:eq(23)',row).css('background-color','#ffff80');
+
+                        var error;
+                        for (error of data.error_set){
+                            if (error == "First name data is missing" || error=="First name data does not match previous year census"){
+                                $('td:eq(0)',row).css('background-color','#F08080'); 
+                                $('td:eq(0)',row).attr('title',error)
+                                $('td:eq(0)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Last name data is missing" || error=="Last name data does not match previous year census"){
+                                $('td:eq(1)',row).css('background-color','#F08080'); 
+                                $('td:eq(1)',row).attr('title',error)
+                                $('td:eq(1)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Social Security Number data is missing"){
+                                $('td:eq(2)',row).css('background-color','#F08080'); 
+                                $('td:eq(2)',row).attr('title',error)
+                                $('td:eq(2)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "DOB data is missing"){
+                                $('td:eq(3)',row).css('background-color','#F08080'); 
+                                $('td:eq(3)',row).attr('title',error)
+                                $('td:eq(3)',row).attr('data-toggle',"tooltip")
+                            }
+                            
+                            if (error == "DOH data does not match previous year census" || error=="DOH data is missing"){
+                                $('td:eq(4)',row).css('background-color','#F08080'); 
+                                $('td:eq(4)',row).attr('title',error)
+                                $('td:eq(4)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "DOT is before engagement year" || error=="DOT data does not match previous year census"){
+                                $('td:eq(5)',row).css('background-color','#F08080'); 
+                                $('td:eq(5)',row).attr('title',error)
+                                $('td:eq(5)',row).attr('data-toggle',"tooltip")
+                            }
+                            
+                            if (error == "DORH data does not match previous year census"){
+                                $('td:eq(6)',row).css('background-color','#F08080'); 
+                                $('td:eq(6)',row).attr('title',error)
+                                $('td:eq(6)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Eligible wages are greater than IRS limit"){
+                                $('td:eq(9)',row).css('background-color','#F08080'); 
+                                $('td:eq(9)',row).attr('title',error)
+                                $('td:eq(9)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Hours worked data is missing"){
+                                $('td:eq(10)',row).css('background-color','#F08080'); 
+                                $('td:eq(10)',row).attr('title',error)
+                                $('td:eq(10)',row).attr('data-toggle',"tooltip")
+                            }
+                            /*if (error == "Contribution amount is over IRS limit" || error == ){
+                                $('td:eq(14)',row).css('background-color','#F08080'); 
+                                $('td:eq(14)',row).attr('title',error)
+                                $('td:eq(14)',row).attr('data-toggle',"tooltip")
+                            }*/
+                            if (error == "Catch-up contribution amount is over IRS limit" || error == "Employee is not eligible for catch-up contributions" ){
+                                $('td:eq(13)',row).css('background-color','#F08080'); 
+                                $('td:eq(13)',row).attr('title',error)
+                                $('td:eq(13)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Employee is ineligible and is participating"){
+                                $('td:eq(23)',row).css('background-color','#F08080'); 
+                                $('td:eq(23)',row).attr('title',error)
+                                $('td:eq(23)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Employee contributions are greater than IRS limit"){
+                                console.log("Found error")
+                                $('td:eq(14)',row).css('background-color','#F08080'); 
+                                $('td:eq(14)',row).attr('title',error)
+                                $('td:eq(14)',row).attr('data-toggle',"tooltip")      
+                            }
+                            /*if (error == "Employee is not eligible for catch-up contributions"){
+                                console.log("Found Error")
+                                $('td:eq(13)',row).css('background-color','#F08080'); 
+                                $('td:eq(13)',row).attr('title',error)
+                                $('td:eq(13)',row).attr('data-toggle',"tooltip")  
+                            }*/
+                            if (error == "Employee is excluded but is participating"){
+                                $('td:eq(8)',row).css('background-color','#F08080'); 
+                                $('td:eq(8)',row).attr('title',error)
+                                $('td:eq(8)',row).attr('data-toggle',"tooltip")  
+                            }
+                            
+                        };
+                }},
+
+                "columns":[
+                    {"data":"first_name",},
+                    {"data":"last_name"},
+                    {"data":"SSN"},
+                    {"data":"DOB"},
+                    {"data":"DOH"},
+                    {"data":"DOT"},
+                    {"data":"DORH"},
+                    {"data":"excluded",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red; text-align:center;">'
+                        }
+                    
+                    }},
+                    {"data":"gross_wages",
+                    "render":function(data,type,row){
+                        value =  zeroDollar(data)
+                        if (value != "-") {
+                            return numberWithCommas(value)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":"eligible_wages",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value!= "-"){
+                            return numberWithCommas(value)
+                        }
+                        else{
+                            return value
+                        }
+                    }},
+                    {"data":"hours_worked",
+                    "render":function(data,type,row){
+                        value=zeroString(data)
+                        if (value != "-"){
+                            return numberWithCommas(value)
+                        }
+                        else{
+                            return value
+                        }
+                    }},
+                    {"data":"EE_pre_tax_amount",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value != "-"){
+                            return "$" + numberWithCommas(data)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":"EE_roth_amount",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value != "-"){
+                            return "$" + numberWithCommas(data)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":"EE_catch_up",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value != "-"){
+                            return "$" + numberWithCommas(data)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":function(row,type,val,meta){
+                        value = row.EE_pre_tax_amount + row.EE_roth_amount + row.EE_catch_up
+                        if (value == 0){
+                            return "-";
+                        } else {
+                            value = value.toFixed(2);
+                            return"$" + numberWithCommas(value);
+                        }
+                    }},
+                    {"data":"ER_pre_tax_amount",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value != "-"){
+                            return "$" + numberWithCommas(data)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":"ER_roth_amount",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value != "-"){
+                            return "$" + numberWithCommas(data)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":"ER_catch_up",
+                    "render":function(data,type,row){
+                        value=zeroDollar(data)
+                        if (value != "-"){
+                            return "$" + numberWithCommas(data)
+                        }
+                        else {
+                            return value
+                        }
+                    }},
+                    {"data":function(row,type,val,meta){
+                        value=row.ER_pre_tax_amount + row.ER_roth_amount + row.ER_catch_up;
+                        if (value == 0){
+                            return "-";
+                        } else {
+                            value=value.toFixed(2);
+                            return "$" + numberWithCommas(value);
+                        }
+                        
+                    }},
+                    {"data":function(row,type,val,meta){
+                        return (((row.EE_pre_tax_amount + row.EE_roth_amount + row.EE_catch_up)/row.gross_wages)*100).toFixed(2) + "%"
+                    }},
+                    {"data":"selection",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red;">'
+                        }
+                    
+                    }},
+                    {"data":"key_employee",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red; text-align:center;">'
+                        }
+                    
+                    }},
+                    {"data":"eligible",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red; text-align:center;">'
+                        }
+                    
+                    }},
+                    {"data":"participating",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red; text-align:center;">'
+                        }
+                    
+                    }},
+            ],
+            "order":[[1,"desc"]],
+            });
+        })
+    </script>
+{% endblock scripts %}
 
 
 

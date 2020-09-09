@@ -116,6 +116,7 @@ class createClientView(TemplateView):
             name=request.POST.get('name')
             number=request.POST.get('number')
             users=request.POST.get('users')
+            print(users)
             slug=slugify(name)
             instance=models.client.objects.create(name=name,number=number,slug=slug)
             instance.users.set(users)
