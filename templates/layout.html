@@ -7,12 +7,14 @@
 
     <!--Loading static files-->
     {% load static %}
-    <link rel="stylesheet" type="text/css" href="{% static 'main/css/bootstrap.min.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'main/css/site.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'main/css/jquery.mCustomScrollbar.css' %}" />
-    <link rel="stylesheet" type="text/css" href="{% static 'main/css/datatables.min.css' %}" />
-    <script src="{% static 'main/js/fontawesome.min.js' %}"></script>
-    <script src="{% static 'main/js/solid.min.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/site.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery.mCustomScrollbar.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/datatables.min.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'css/jquery-ui.min.css' %}" />
+
+    <script src="{% static 'js/fontawesome.min.js' %}"></script>
+    <script src="{% static 'js/solid.min.js' %}"></script>
 </head>
 
 <body>
@@ -56,14 +58,15 @@
     </div>
 
     <!--Importing our jquery, popper and boostrap javascript scripts-->
-    <script src="{% static 'main/js/jquery.min.js' %}"></script>
-    <script src="{% static 'main/js/popper.min.js' %}"></script>
-    <script src="{% static 'main/js/bootstrap.js' %}"></script>
-    <script src="{% static 'main/js/datatables.min.js' %}"></script>
-    <script src="{% static 'main/js/modal_plugin.js' %}"></script>
-    <script src="{% static 'main/js/client_table.js' %}"></script>
-    <script src="{% static 'main/js/engagement_table.js' %}"></script>
-    <script src="{% static 'main/js/census_table.js' %}"></script>
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/popper.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.js' %}"></script>
+    <script src="{% static 'js/datatables.min.js' %}"></script>
+    <script src="{% static 'js/modal_plugin.js' %}"></script>
+    <script src="{% static 'js/client_table.js' %}"></script>
+    <script src="{% static 'js/engagement_table.js' %}"></script>
+    <script src="{% static 'js/census_table.js' %}"></script>
+    <script src="{% static 'js/jquery-ui.min.js' %}"></script>
     
     
 {% block scripts %}{% endblock %}

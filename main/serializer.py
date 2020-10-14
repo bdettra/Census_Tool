@@ -2,10 +2,22 @@ from rest_framework import serializers
 from main import models
 
 
+class ClientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=models.client
+        fields=("name","number","users","slug")
+
+class EngagementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=models.engagement
+        fields=("name","date","slug")
+
 class ErrorSerializer(serializers.ModelSerializer):
     class Meta:
         model=models.error
         fields=("error_message","participant")
+
+
 
 class ParticipantSerializer(serializers.ModelSerializer):
     error_set=serializers.StringRelatedField(many=True, read_only=True)

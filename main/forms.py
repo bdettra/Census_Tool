@@ -16,7 +16,7 @@ from bootstrap_modal_forms.forms import BSModalForm
 import pandas as pd
 from django.utils.text import slugify
 
-class AuthenticationForm(forms.Form):
+'''class AuthenticationForm(forms.Form):
     """Authentication form which uses boostrap CSS."""
     email = forms.EmailField(widget=forms.TextInput({
                                    'class': 'form-control',
@@ -78,7 +78,7 @@ class UserCreationForm(DjangoUserCreationForm):
             admin_message,
             "site@atech.domain",
             [admin.email],
-            fail_silently=True)
+            fail_silently=True)'''
 
 
 class NewClientForm(forms.ModelForm):
@@ -94,9 +94,11 @@ class NewClientForm(forms.ModelForm):
         name=self.cleaned_data.get("name")
         number=self.cleaned_data.get("number")
 
+        #Checking to make sure that the client name does not already exist in the database
         if models.client.objects.filter(name=name).exists():
             raise forms.ValidationError("This client name already exists")
 
+        #Checking to make sure tha the client number does not already exist in the database
         elif models.client.objects.filter(number=number).exists():
             raise forms.ValidationError("This client number already exists")
 
@@ -117,22 +119,28 @@ class EditClientForm(forms.ModelForm):
 
 
     def clean(self):
+        
         name=self.cleaned_data.get("name")
         number=self.cleaned_data.get("number")
 
+        #Checking to make sure that the new client name does not already exist in the database
         if models.client.objects.filter(name=name).exists() and self.client.name != name:
             raise forms.ValidationError("This client name already exists")
 
+        #Checking to make sure that the new client number does not already exist in the database
         elif models.client.objects.filter(number=number).exists() and self.client.number != number:
             raise forms.ValidationError("This client number already exists")
 
         return self.cleaned_data
 
     def save(self):
+        #Getting the new name, number and users from the form.
         name=self.cleaned_data.get("name")
         number=self.cleaned_data.get("number")
         users=self.cleaned_data.get("users")
         slug=slugify(name)
+
+        #Updating the existing client in the database.
         instance=self.client
         instance.name=name
         instance.number=number
@@ -153,13 +161,15 @@ class NewEngagementForm(BSModalForm):
         model=models.engagement
         fields=('name','date')
         widgets={'name':forms.fields.TextInput(attrs={"placeholder":"Engagement Name",'class':'form-control'}),
-        'date':forms.fields.TextInput(attrs={"placeholder":"Engagement Date",'class':'form-control'})}
+        'date':forms.fields.DateInput(attrs={"placeholder":"Engagement Date",'class':'form-control','id':'datepicker'})}
 
         
     def clean(self):
         name=self.cleaned_data.get("name")
         date=self.cleaned_data.get("date")
+        
 
+        #Making sure that this engagement name does not already exist for the selected client.
         if models.engagement.objects.filter(name=name,client=self.client).exists():
             raise forms.ValidationError("This engagement name already exists")
             
@@ -191,6 +201,9 @@ class EligibilityForm(forms.ModelForm):
 
     def clean(self):
         data=[]
+
+        #Getting the age, service hours, service days, service months, service years, excluded employees and entry date data
+        #from the form and appending it to the data list.
         age=self.cleaned_data.get("age")
         data.append(age)
 
@@ -210,6 +223,7 @@ class EligibilityForm(forms.ModelForm):
 
         entry_date=self.cleaned_data.get("entry_date")
 
+        #Iterating through the data list and perorming data validation on each of the form attributes.
         for value in data:
             if value is None:
                 value=0
@@ -220,7 +234,13 @@ class EligibilityForm(forms.ModelForm):
 
     
     def save(self,engagement):
+        '''A custom save function for the eligiblity form so that users can either update existing eligiblity rules for an engagement
+        or if the engagement is brand new they can create a new set of eligiblity rules'''
+        
         data=[]
+
+        #Getting the age, service hours, service days, service months, service years, excluded employees and entry date data
+        #from the form and appending it to the data list.
         age=self.cleaned_data.get("age")
         data.append(age)
 
@@ -239,6 +259,7 @@ class EligibilityForm(forms.ModelForm):
         excluded_employees=self.cleaned_data.get("excluded_employees")
 
         entry_date=self.cleaned_data.get("entry_date")
+        #Iterating through the data list and perorming data validation on each of the form attributes.
         for value in data:
             print(value)
         for value in range(len(data)):
@@ -246,7 +267,7 @@ class EligibilityForm(forms.ModelForm):
                 data[value]=int(0)
                 
         
-
+        #Either finding the existing eligiblity rules object in the database or creating a new eligilbity rules object in the database.
         eligibility_rules,created=models.eligibility_rules.objects.get_or_create(engagement=engagement)
         eligibility_rules.age=data[0]
         eligibility_rules.service_hours=data[1]

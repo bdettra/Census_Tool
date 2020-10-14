@@ -24,6 +24,8 @@ import xlwt
 from rest_framework import generics
 from . import serializer
 import re
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 def home(request):
@@ -64,8 +66,8 @@ def about(request):
         }
     )
 
-class SignUpView(FormView):
-    '''Renders the sign up page.'''
+'''class SignUpView(FormView):
+    Renders the sign up page.
 
     template_name="signup.html"
     form_class=forms.UserCreationForm
@@ -83,7 +85,7 @@ class SignUpView(FormView):
         login(self.request,user)
         form.send_mail()
         messages.info(self.request,"You signed up successfully.")
-        return response
+        return response'''
 
 
 @login_required
@@ -96,10 +98,12 @@ def client_dashboard(request):
 
     return render(request,"client_dashboard.html",context)
 
-class createClientView(TemplateView):
+
+class createClientView(LoginRequiredMixin,TemplateView):
     '''Renders the create client modal'''
 
     template_name="new_client.html"
+    login_url='/accounts/login/'
 
     def get(self,request,*args,**kwargs):
         data=dict()
@@ -116,7 +120,6 @@ class createClientView(TemplateView):
             name=request.POST.get('name')
             number=request.POST.get('number')
             users=request.POST.get('users')
-            print(users)
             slug=slugify(name)
             instance=models.client.objects.create(name=name,number=number,slug=slug)
             instance.users.set(users)
@@ -128,20 +131,37 @@ class createClientView(TemplateView):
         context={"clients":clients,"form":form}
         
 
-        data['clients']=render_to_string('client_list.html',{'clients':context['clients'],},request=request)
+        #data['clients']=render_to_string('client_list.html',{'clients':context['clients'],},request=request)
         data['html_form']=render_to_string('new_client.html',context,request=request)
         
         return JsonResponse(data)
 
 
 class ClientDeleteView(DeleteView):
+    '''Deletes a client from the database'''
+
     model=models.client
     success_url=reverse_lazy('client_dashboard')
     template_name="client_dashboard.html"
 
+class EngagementDeleteView(DeleteView):
+    '''Deletes an engagement from the database'''
+    model=models.engagement
+    slug_url_kwarg="Eslug"
+    template_name="client_page.html"
+
+    def get_success_url(self):
+        client=self.object.client
+        client_slug=client.slug
+
+        return reverse_lazy('client_page',kwargs={"slug":client_slug})
+
+
 
 
 class CreateEngagement(TemplateView):
+    '''Creates a new engagement and adds it to the engagement table'''
+
     template_name="new_engagement.html"
 
     def get(self,request, slug, *args,**kwargs):
@@ -200,10 +220,9 @@ class CreateEngagement(TemplateView):
         
         context={"engagements":engagements,"client":client_object,"form":form}
 
-        data['engagements']=render_to_string('engagement_list.html',{'engagements':context['engagements'], 'client': context['client']},request=request)
+        #data['engagements']=render_to_string('engagement_list.html',{'engagements':context['engagements'], 'client': context['client']},request=request)
         
         data['html_form']=render_to_string('new_engagement.html',context,request=request)
-        print(data['form_is_valid'])
 
         return JsonResponse(data)    
 
@@ -293,6 +312,7 @@ class EditEligibility(TemplateView):
                 plugin.eligibility(participant,eligibility_rules,engagement)
                 plugin.participating(participant)
                 plugin.effective_deferral(participant)
+                
         
 
         
@@ -319,7 +339,7 @@ class EditEligibility(TemplateView):
 
 
         data['engagements']=render_to_string('eligibility_rules.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
-        data['engagements1']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
+        #data['engagements1']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
 
         
         data['form_is_valid']=True
@@ -375,7 +395,7 @@ class KeyEmployee(TemplateView):
 
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
 
-        data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
+        #data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
         
         data['form_is_valid']=True
         data['html_form']=render_to_string('key_employee.html',context,request=request)
@@ -439,6 +459,8 @@ class MakeSelections(TemplateView):
 
         x = plugin.generate_selections(engagement)
         print(x)
+
+        #print(plugin.generate_selections_version_2(engagement,client))
         participants=models.participant.objects.filter(engagement=engagement)
         errors=False
         for participant in participants:
@@ -448,7 +470,7 @@ class MakeSelections(TemplateView):
 
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
 
-        data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client']},request=request)
+        #data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client']},request=request)
         
         data['form_is_valid']=True
         data['html_form']=render_to_string('make_selections.html',context,request=request)
@@ -521,68 +543,66 @@ class UploadCensus(TemplateView):
         return JsonResponse(data)
 
     def post(self,request,slug,Eslug,*args,**kwargs):
+        #Defining our client, engagement, eligiblity rules, census forms and participants objects
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         form=forms.CensusFileForm(request.POST, request.FILES)
         participants=models.participant.objects.filter(engagement=engagement)
+
+        #Deleting existing participants in the engagement everytime a new census is uploaded.
         for instance in participants:
             instance.delete()
+        
+        #Redefining our particiapnts queryset after participants have been deleted
         participants=models.participant.objects.filter(engagement=engagement)
+
+        #Creating out context object
         context={"client":client,"engagement":engagement,"eligibility_rules":eligibility_rules,"form":forms.CensusFileForm,"participants":participants}
 
+        #Creating a previous year engagement variable and assigning it as false.
         py_engagement=False
+
+        #Creating a previous year participants variable and assigning it as none.
         py_participants=None
         
+        #Getting a queryset of engagements with a date before the current engagement date
         py_engagements=models.engagement.objects.filter(client=client,date__lt=engagement.date)
 
+        #If py_engagement variable is more than 0 the previous year engagement is engagement with the latest date.
         if len(py_engagements) > 0 :
             py_engagement=py_engagements.latest('date')
             py_participants=models.participant.objects.filter(engagement=py_engagement)
 
-
+        #Reading in the excel file that is uploaded as a pandas table
         data=pd.read_excel(request.FILES['filename'])
         
+        #Creating a columns variable from our dataset 
         columns=data.columns
 
-        column_dict={"First Name":["First Name", "First"],"Last Name":["Last Name", "Last"],"SSN":["Social","SSN"],
-             "DOB":["Date of B","DOB"],"DOH":["Date of H", "DOH"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
-             "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked"],"Gross Wages":["Gross Wa", "Gross Wages"],
-             "Eligible Wages":["Eligible Wages","eligible wages","Eligible wages","eligible Wages","Eligible Wage","eligible wage"],
-            "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax"],
-             "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con"],
-            "EE Roth":["Employee Roth","employee roth","Employee roth","EE Roth"],
-            "ER Roth":["Employer Roth","employer roth","Employer roth","ER Roth"],
-            "EE Catch-up":["Employee Catch-Up","employee catch-up","EE Catch-up","EE Catch-Up","ee catch-up","EE catch-up"],
-            "ER Catch-up":["Employer Catch-Up","employer catch-up","ER Catch-up","ER Catch-Up","er catch-up", "ER catch-up","ER Catch-UP"]}
-
+        #Converting the DOB, DOH and DORH columns into datetime objects. If reload the engagement page
         try:
             data['DOB']=pd.to_datetime(data['DOB'],format="%m/%d/%y")
             data['DOH']=pd.to_datetime(data['DOH'],format="%m/%d/%y")
+            data['DOT']=pd.to_datetime(data['DOT'],format="%m/%d/%y")
             data['DORH']=pd.to_datetime(data['DORH'],format="%m/%d/%y")
         except Exception as e:
             print('There was an error:{0}'.format(e))
+            messages.error(self.request,"There is an invalid data point in the DOB,DOH or DORH columns")
             return render(request,"engagement_page.html",context=context)
 
-        location_dict=dict()
-        for key, value in column_dict.items():
-            found=False
-            for v in value:
-                counter=0
-                location=0
-                pattern=re.compile(v)
-                for c in columns:
-                    if pattern.match(c)!=None and found==False:
-                        location=counter
-                        location_dict[key]=location
-                        counter+=1
-                        found=True
-                    elif found==False:
-                        counter+=1
+        location_dict=plugin.location_dict(columns)
 
         for i,x in data.iterrows():
             if pd.isnull(data.iloc[i,location_dict['SSN']])==False:
-                participant, created=models.participant.objects.update_or_create(SSN=data.iloc[i,location_dict['SSN']],engagement=engagement)
+                ssn = str(data.iloc[i,location_dict['SSN']])
+                full_ssn_pattern=re.compile('[0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]')
+                partial_snn_pattern=re.compile('[0-9][0-9][0-9][0-9]')
+                if full_ssn_pattern.fullmatch(ssn) != None or partial_snn_pattern.fullmatch(ssn) != None:
+                    participant, created=models.participant.objects.update_or_create(SSN=data.iloc[i,location_dict['SSN']],engagement=engagement)
+                else:
+                    messages.error(self.request,"The SSN in row " + str(i+1) + " is not in the correct format. Census stopped processing at that employee.")
+                    return render(request,"engagement_page.html",context=context)
             else:
                 messages.error(self.request,"One of the employees is missing a SSN value. Census stopped processing at that employee.")
                 return render(request,"engagement_page.html",context=context)
@@ -593,7 +613,7 @@ class UploadCensus(TemplateView):
             else:
                 error=models.error.objects.create(participant=participant,error_message="First name data is missing")
                 error.save()
-                messages.error(self.request,"One of the participants is missing a First Name Value")
+                #messages.error(self.request,"One of the participants is missing a First Name Value")
                 
             
             if pd.isnull(data.iloc[i,location_dict['Last Name']])==False:
@@ -602,7 +622,7 @@ class UploadCensus(TemplateView):
             else:
                 error=models.error.objects.create(participant=participant,error_message="Last name data is missing")
                 error.save()
-                messages.error(self.request,"One of the participants is missing a Last Name Value")
+                #messages.error(self.request,"One of the participants is missing a Last Name Value")
 
             if pd.isnull(data.iloc[i,location_dict['DOB']])==False:
                 participant.DOB=data.iloc[i,location_dict['DOB']].date()
@@ -624,25 +644,32 @@ class UploadCensus(TemplateView):
                 participant.save()
                 if participant.DOT < (engagement.date - relativedelta(years=1)):
                     error=models.error.objects.create(participant=participant,error_message="DOT is before engagement year")
-                    messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
+                    #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
 
             if pd.isnull(data.iloc[i,location_dict['DORH']])==False:
                 participant.DORH=data.iloc[i,location_dict['DORH']].date()
 
             if pd.isnull(data.iloc[i,location_dict["Excluded"]])==False:
                 excluded=data.iloc[i,location_dict['Excluded']]
-                excluded_values=[None,"No",'no']
+
+                no_values=[None,"No",'no']
+
+                yes_values=["Yes","yes"]
                 
-                if data.iloc[i,location_dict['Excluded']] in excluded_values:
+                if data.iloc[i,location_dict['Excluded']] in no_values:
                     participant.excluded=False
-                else:
+                elif data.iloc[i,location_dict['Excluded']] in yes_values:
                     participant.excluded=True
+                else:
+                    messages.error(self.request,"There is an invalid data point in the Excluded colmun at row " + str(i+1) + ". Values in this column must be Yes/No. Census stopped processing on this row.")
+                    return render(request,"engagement_page.html",context=context)
 
             if pd.isnull(data.iloc[i,location_dict['Hours Worked']])==False:
                 participant.hours_worked=data.iloc[i,location_dict['Hours Worked']]
             else:
+                
                 error=models.error.objects.create(participant=participant,error_message="Hours worked data is missing")
-                messages.error(self.request,"One of the participants is missing an 'Hours Worked' value")
+                #messages.error(self.request,"One of the participants is missing an 'Hours Worked' value")
 
             if pd.isnull(data.iloc[i,location_dict['Gross Wages']])==False:
                 participant.gross_wages=data.iloc[i,location_dict['Gross Wages']]
@@ -680,6 +707,7 @@ class UploadCensus(TemplateView):
             plugin.eligibility(participant,eligibility_rules,engagement)
             plugin.participating(participant)
             plugin.effective_deferral(participant)
+            
 
             if py_engagement != False:
                 error_messages=plugin.previous_year_check(participant,py_engagement)
@@ -703,11 +731,11 @@ class UploadCensus(TemplateView):
                     else:
                         models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
                         participant.save()
-                        messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+                        #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
 
                 else:
                     models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
-                    messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+                    #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
 
             if participant.excluded == True and participant.participating == True:
                 messages.error(self.request, participant.first_name + " " + participant.last_name + " " + " is an excluded employee who is participating. You should investigate further.")
@@ -862,7 +890,7 @@ class ViewErrors(TemplateView):
         errors=False
         for participant in participants:
             if len(participant.error_set.all()) > 0:
-                print("Numebr of Errors:" + str(len(participant.error_set.all())))
+                print("Number of Errors:" + str(len(participant.error_set.all())))
                 errors=True
                 break
         
@@ -870,7 +898,7 @@ class ViewErrors(TemplateView):
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
         
 
-        data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
+        #data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
         data['form_is_valid']=True
         data['html_form']=render_to_string('view_errors_updated.html',context,request=request)
 
@@ -957,35 +985,35 @@ def export_errors(request,slug,Eslug):
     return response
 
 class ParticipantAPI(generics.ListAPIView):
+    permission_classes=[IsAuthenticated]
     serializer_class=serializer.ParticipantSerializer
 
     def get_queryset(self):
-        print(self.kwargs)
         client=models.client.objects.get(slug=self.kwargs['slug'])
         engagement=models.engagement.objects.get(slug=self.kwargs['Eslug'])
         participants=models.participant.objects.filter(engagement=engagement)
         
         return participants
-        
+
+class ClientAPI(generics.ListAPIView):
+    permission_classes=[IsAuthenticated]
+    serializer_class=serializer.ClientSerializer
+
+    def get_queryset(self):
+        clients=models.client.objects.filter(users=self.request.user) 
+        return clients 
+
+class EngagementAPI(generics.ListAPIView):
+    permission_classes=[IsAuthenticated]
+    serializer_class=serializer.EngagementSerializer
+
+    def get_queryset(self):
+        client=models.client.objects.get(slug=self.kwargs['slug'])
+        engagements=models.engagement.objects.filter(client=client) 
+
+        return engagements    
 
 
-
-
-'''
-class ParticipantView(TemplateView):
-    template_name="participant_page.html"
-
-
-    def get(self,request,slug,Eslug,*args,**kwargs):
-        data=dict()
-
-        return JsonResponse(data)
-
-    def post(self,request,slug,Eslug,*args,**kwargs):
-        data=dict()
-
-        return JsonResponse(data)
-'''
 
 
 

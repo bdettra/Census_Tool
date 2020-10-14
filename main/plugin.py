@@ -3,33 +3,88 @@ from dateutil.relativedelta import relativedelta
 from django.core.exceptions import ObjectDoesNotExist
 from . import models
 from django_random_queryset import RandomManager
+import re
+
+def location_dict(columns):
+    column_dict={"First Name":["First Name", "First"],"Last Name":["Last Name", "Last"],"SSN":["Social","SSN"],
+             "DOB":["Date of B","DOB"],"DOH":["Date of H", "DOH"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
+             "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked"],"Gross Wages":["Gross Wa", "Gross Wages"],
+             "Eligible Wages":["Eligible Wages","eligible wages","Eligible wages","eligible Wages","Eligible Wage","eligible wage"],
+            "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax"],
+             "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con"],
+            "EE Roth":["Employee Roth","employee roth","Employee roth","EE Roth"],
+            "ER Roth":["Employer Roth","employer roth","Employer roth","ER Roth"],
+            "EE Catch-up":["Employee Catch-Up","employee catch-up","EE Catch-up","EE Catch-Up","ee catch-up","EE catch-up"],
+            "ER Catch-up":["Employer Catch-Up","employer catch-up","ER Catch-up","ER Catch-Up","er catch-up", "ER catch-up","ER Catch-UP"]}
+    
+    location_dict=dict()
+    for key, value in column_dict.items():
+        found=False
+        for v in value:
+            counter=0
+            location=0
+            pattern=re.compile(v)
+            for c in columns:
+                if pattern.match(c)!=None and found==False:
+                    location=counter
+                    location_dict[key]=location
+                    counter+=1
+                    found=True
+                elif found==False:
+                    counter+=1
+    return location_dict
+
+def excluded_check(participant):
+    if participant.excluded==True:
+        participant.eligible=False
+        participant.save()
 
 def eligibility(participant, eligibility_rules, engagement):
+    '''A function that determines if an employee is eligible or not'''
+
     year_end = engagement.date
     age = engagement.date - participant.DOB
     age=((age.days)/365) 
+    #Making each participant's eligible attribute as False to start with.
     participant.eligible=False
-    if participant.excluded == True:
-        participant.eligible=False
+
+    #If the participant is excluded make the participant's eligiblity attribute False
+    #if participant.excluded == True:
+        #participant.eligible=False
+
+    excluded_check(participant)    
+    #If the participant's age is over the eligiblity rules age through additional checks
     if age > eligibility_rules.age:
+
+        #If the participant's hours worked is greater than the eligiblity rules service hours then proceed with additional checks
         if participant.hours_worked >= eligibility_rules.service_hours:
+
+            #If the participant was terminated and rehired make the participants "Start Day" equal to the DORH attribute
             if participant.DOT != None and participant.DORH != None:
                 start_day = participant.DORH
+
+            #If the participant was not terminated then make the participants "Start Day" equal to the DOH attribute
             elif participant.DOT == None:
                 start_day = participant.DOH
+            
+            #If the participant was terminated and was never re-hired make the participants eligiblity attribute False
             elif participant.DOT != None and participant.DORH == None:
                 participant.eligiblity=False
 
-            
+            #If the participant does not have a DORH attribute make the participants "Start Day" the participant's DOH attribute
+            #else if the participant does have a DORH make that the employees "Start Day"
             if participant.DORH == None:
                 start_day = participant.DOH
             else:
                 start_day = participant.DORH
 
+            #Creating datetime objects for the service days, service years and service months eligiblity rules
             service_days=relativedelta(days=eligibility_rules.service_days)
             service_years=relativedelta(years=eligibility_rules.service_years)
             service_months=relativedelta(months=eligibility_rules.service_months)
 
+            #Creating datetime variables for when the participant becomes eligible for each of the eligiblity requirements (Eligible Days, Eligible Months, Eligible Years)
+            #and appending it to a list
             eligible_dates=[]
             eligible_days = start_day + service_days
             eligible_dates.append(eligible_days)
@@ -38,24 +93,54 @@ def eligibility(participant, eligibility_rules, engagement):
             eligible_months = start_day + service_months
             eligible_dates.append(eligible_months)
 
-
+            #Creating entry date, entry month and entry year variables and appending them to a list named "Entry Dates"
             entry_date=None
             entry_month=None
             entry_year=None
 
             entry_dates=[entry_date,entry_month,entry_year]
             
+            #Iterating through the entry dates list and creating an entry dates list for  
             for i in range(len(entry_dates)):
                 if eligibility_rules.entry_date == "First day of following Month":
                     entry_dates[i] = eligible_dates[i] + relativedelta(months=1)
                     entry_dates[i]= entry_dates[i].replace(day=1)
-                    
+
+                elif eligibility_rules.entry_date == "Semi Annual (Jan 1 or July 1)":
+
+                    #Seting the Mid Year July entry date variable 
+                    july_eligible_date=engagement.date.replace(month=7,day=1)
+
+                    #If the eligible dates variable is greater than the mid year July entry date variable then the entry dates
+                    #variable is set to Jan. 1 of the following year else the entry date variable is July 1st of the current year
+                    if eligible_dates[i] > july_eligible_date:
+                        entry_dates[i]=engagement.date + relativedelta(years=1)
+                        entry_dates[i]=entry_dates[i].replace(month=1,day=1)
+                    else:
+                        entry_dates[i]=july_eligible_date
                 
+                #If the eligiblity rules entry date is "Annual (Jan1)" and the eligible date variable is greater than Jan.1 of the engagement year
+                #then the entry date is Jan.1 of the year following the engagement year, else the entry date is the date of the eligible dates.
+                elif eligibility_rules.entry_date == "Annual (Jan 1)":
+                    if eligible_dates[i] > engagement.date.replace(month=1,day=1):
+                        entry_dates[i]=engagement.date + relativedelta(year=1)
+                        entry_dates[i]=entry_dates[i].replace(month=1,day=1)
+                
+                else:
+                    entry_dates[i]=eligible_dates[i]
+
+            #Setting the eligible variable to True    
             eligible=True
+
+            #Iterating through the entry dates list and for each variable in the list if that variable is greater than the engagement date year end then 
+            #the eligible variable is set to false
             for i in entry_dates:
                 if i > year_end:
                     eligible=False
             
+            #If the eligible variable is still true that means the entry date had to have been in the current engagement year
+            #therefore we are setting the partiicipants eligible attribute to ture if the eligible variable is true
+            #and false if the eligible variable is false.
             if eligible == True:
                 participant.eligible=True
             else:
@@ -65,6 +150,8 @@ def eligibility(participant, eligibility_rules, engagement):
     return participant.eligible
 
 def participating(participant):
+
+    #Initializing participant contribution variables
     employee_pre_tax=None
     employer_pre_tax=None
     employee_roth=None
@@ -111,6 +198,7 @@ def participating(participant):
         employer_catch_up=True
     participating.append(employer_catch_up)
 
+    #For loop that lists through participant contribution vairalbes and if any of them equal true then the participants participating variable is set to true and the contributing variable is set to true
     for i in participating:
         if i == True:
             participant.participating=True
@@ -120,6 +208,8 @@ def participating(participant):
 
             
 def effective_deferral(participant):
+    '''A function that determines the participants effective deferral percentage'''
+
     total_deferral = participant.EE_pre_tax_amount + participant.EE_roth_amount + participant.EE_catch_up
 
     percentage = (total_deferral / participant.gross_wages) * 100
@@ -128,7 +218,9 @@ def effective_deferral(participant):
 
 
 def generate_selections(engagement):
+    '''A function that makes selections for an engagemenet'''
     
+    #Getting the participants related to the specific engagement and makeing there selection attribute false
     participants=models.participant.objects.filter(engagement=engagement)
     for i in participants:
         i.selection=False
@@ -183,8 +275,6 @@ def generate_selections(engagement):
 
     #Defining the remaining population after excluding our selected Key Employees    
     sample=participants.filter(key_employee=False)
-    print(sample)
-    print(participants)
 
     #Defining the date range of engagement to lookback on for making selections
     engagements=models.engagement.objects.filter(date__range=[(engagement.date-relativedelta(years=3)), engagement.date-relativedelta(years=1)])
@@ -195,13 +285,17 @@ def generate_selections(engagement):
     for engagement in engagements:
         for participant in sample:
             try:
+                #Using the SSN as the ultimate identifier
                 py_selection = engagement.participant_set.get(SSN=participant.SSN,selection=True)
                 py_selections.append(py_selection)
             except ObjectDoesNotExist:
                 print("This participant was not a previous year selections")
+
+    #Excluding PY selections for our CY sample            
     for selection in py_selections:
         sample=sample.exclude(SSN=selection.SSN)
 
+    #Creating seperate samples of contributing and non-contributing employees.
     sample_of_contributing =sample.filter(contributing=True)
     sample_of_non_contributing = sample.filter(contributing=False)
 
@@ -213,7 +307,7 @@ def generate_selections(engagement):
 
     for participant in contributing_selections:
         participant.selection=True
-        selections_dict=participant.SSN
+        #selections_dict=participant.SSN
         participant.save()
 
     for participant in non_contributing_selections:
@@ -223,6 +317,74 @@ def generate_selections(engagement):
     
 
     return sample
+
+'''
+def generate_selections_version_2(engagement,client):
+    population = models.participant.objects.filter(engagement=engagement)
+
+    new_hires= models.participant.objects.filter(DOH__range=[engagement.date-relativedelta(years=1), engagement.date])
+
+    terminations = models.participant.objects.filter(DOT__range=[engagement.date-relativedelta(years=1), engagement.date])
+
+    previous_engagements = models.engagement.objects.filter(client=client).order_by('-date')
+
+    previous_year_engagement = previous_engagements[1]
+
+    changes = []
+
+    for participant in population:
+        error_dict={"First Name":False,"Last Name":False,"SSN":False,"DOB":False,
+    "DOH":False,"DOT":False,"DORH":False, "Key Employee":False,"Eligible":False,"Participating":False}
+
+        if  models.participant.objects.get(SSN__exact=participant.SSN,engagement=previous_year_engagement): 
+            previous_year_data = models.participant.objects.get(SSN__exact=participant.SSN,engagement=previous_year_engagement) 
+
+            if participant.first_name != previous_year_data.first_name:
+                error_dict["First Name"]=True
+            elif participant.last_name != previous_year_data.last_name:
+                error_dict["Last Name"]=True
+            
+            elif participant.DOB != previous_year_data.DOB:
+                error_dict["DOB"]=Truechanges.append(participant)
+
+            elif participant.DOH != previous_year_data.DOH:
+                error_dict["DOH"]=True
+
+            elif participant.DOT != previos_year_data.DOT:
+                error_dict["DOT"]=True
+            
+            elif participant.DORH != previous_year_data.DORH:
+                error_dict["DORH"]=True
+
+            elif participant.excluded != previous_year_data.excluded:
+                error_dict["Key Employee"]=True
+
+            elif participant.eligible != previous_year_data.eligible:
+                error_dict["Eligible"]=True
+            
+            elif participant.participating != previous_year_data.participanting:
+                error_dict["Participating"]=True
+
+            for error in error_dict:
+                if error == True:
+                    changes.append(participant)
+                    break
+
+            changes.append(participant)
+        
+        else:
+
+            if models.participant.objects.get(first_name__exact=participant.first_name,last_name__exact=participant.last_name,engagement=previous_year_engagement) 
+
+                previous_year_data = models.participant.objects.get(first_name__exact=participant.first_name,last_name__exact=participant.last_name,engagement=previous_year_engagement) 
+
+''' 
+
+
+            
+
+
+    
 
 
 def previous_year_check(participant,py_engagement):
@@ -262,7 +424,6 @@ def contribution_check(participant,engagement):
     if participant.EE_pre_tax_amount + participant.EE_roth_amount > int(19500):
         error=models.error.objects.create(error_message="Employee contributions are greater than IRS limit",participant=participant)
         error.save()
-        #messages.error(self.request,participant.first_name + " " + participant.last_name + " controbitons are greater than the IRS limit")
 
     age = engagement.date - participant.DOB
     age=((age.days)/365) 
@@ -270,18 +431,17 @@ def contribution_check(participant,engagement):
     if participant.EE_catch_up > int(6000):
         error=models.error.objects.create("Catch-up contributions amount is over IRS limit",participant=participant)
         error.save()
-        #messages.error(self.request,participant.first_name + " " + participant.last_name + " catch-up controbitons are greater than the IRS limit")
-
+        
     if age < 50 and (participant.EE_catch_up + participant.ER_catch_up) > 0:
         error=models.error.objects.create(error_message="Employee is not eligible for catch-up contributions",participant=participant)
         error.save()
-        #messages.error(self.request,participant.first_name + " " + participant.last_name + " is not eligible for catch-up contributions")
+        
 
 def eligible_wages_check(participant,engagement):
     if participant.eligible_wages > int(280000):
         error=models.error.objects.create(error_message="Eligible wages are greater than IRS limit",participant=participant)
         error.save()
-       #messages.error(self.request,participant.first_name + " " + participant.last_name + " eligible wages are over IRS limit")
+      
 
 
 

@@ -4,16 +4,17 @@
     <div class="row">
         <div class="col-sm-9">
         <h2 id="title">{{client.name}}</h2>
+        <div style="padding-bottom:10px;">
             <button class="btn btn-primary show-engagement_form" href="#" data-url="{% url 'create_engagement' client.slug %}">Add Engagement</a></button>
             <button class="btn btn-primary show-edit_client_form" href="#" data-url="{% url 'edit_client' client.slug %}">Edit Client</a></button>           
             <button class="btn btn-danger" data-toggle="modal" data-target="#fm-modal-grid">Delete Client</button>
-            <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="engagement_table">
+        </div>
+            <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="engagement_table" stye="top-padding:10">
                 <thead>
                     <th style="width:25%">Engagement Date</th>
                     <th style="width:50%">Engagement Name</th>
                 </thead>
                 <tbody>
-                    {% include 'engagement_list.html' %}
                 </tbody>
             </table>
         </div>
@@ -58,7 +59,49 @@
 </div>
 
 
-
 {% endblock content %}
+{% block scripts %}
+    <script>
+        $(document).ready(function(){
+            var endpoint = "{% url 'engagementAPI' client.slug %}";
+
+
+            $('#engagement_table').DataTable({
+                "sDom":'lrtip',
+                "bInfo":false,
+                "bPaginate":false,
+                "processing":true,
+                "serverSide":true,
+                "ajax":{
+                    "url":endpoint,
+                    "dataSrc":'',
+                },
+                "columns":[
+                    {"data":"date",
+                    "render":function(data,type,row){
+                        var month=data.slice(5,7);
+                        var day = data.slice(8,10);
+                        var year = data.slice(0,4);
+                        var date = month + '/' + day + '/' + year;
+                        console.log(date);
+                        //var date = date.toLocaleDateString();
+                        return date;
+                    }},
+                    {"data":"name",
+                    "render":function(data,type,row,meta){
+                        if (type == 'display'){
+                            var pathname = window.location.pathname;
+                            data = '<a href="'+ pathname + '/engagement/'+row.slug+'">' + data + '</a>';
+                        }
+                        return data;
+                    }}
+                ],
+                "order":[[0,"asc"]],
+            });
+            
+
+        })
+    </script>
+{% endblock scripts %}
 
 

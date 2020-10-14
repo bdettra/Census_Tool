@@ -7,21 +7,9 @@ urlpatterns=[
     path('', views.home, name='home'),
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),
-    path('login/',
-         LoginView.as_view
-         (
-             template_name='login.html',
-             authentication_form=forms.AuthenticationForm,
-             extra_context=
-             {
-                 'title': 'Log in',
-                 'year' : datetime.now().year,
-             }
-         ),
-         name='login'),
-    path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
-    path('admin/', admin.main_admin.urls,name='admin'),
-    path('signup/',views.SignUpView.as_view(),name='signup'),
+
+    #path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
+    #path('signup/',views.SignUpView.as_view(),name='signup'),
     path('dashboard/',views.client_dashboard,name='client_dashboard'),
     path('dashboard/create_client',views.createClientView.as_view(),name='create_client'),
     path('dashboard/client_page/<slug:slug>',views.client_page,name="client_page"),
@@ -29,6 +17,7 @@ urlpatterns=[
     path('dashboard/client_page/<slug:slug>/new_engagement', views.CreateEngagement.as_view(),name="create_engagement"),
     path('dashboard/client_plage/<slug:slug>/delete',views.ClientDeleteView.as_view(),name="delete_client"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>',views.EngagementView.as_view(),name="engagement_page"),
+    path('dashboard/client_plage/<slug:slug>/engagement/<slug:Eslug>/delete',views.EngagementDeleteView.as_view(),name="delete_engagement"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/edit_eligiblity',views.EditEligibility.as_view(),name="edit_eligibility"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/key_employees',views.KeyEmployee.as_view(),name="key_employees"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/census_statistics',views.CensusStatistics.as_view(),name="census_statistics"),
@@ -40,6 +29,8 @@ urlpatterns=[
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/view_errors',views.ViewErrors.as_view(),name="view_errors"),
     path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/export_errors',views.export_errors,name="export_errors"),
     path('dashboard/<slug:slug>/<slug:Eslug>/participants',views.ParticipantAPI.as_view(),name="participantsAPI"),
-    #path('dashboard/client_page/<slug:slug>/engagement/<slug:Eslug>/<int:pk>',views.PreviousSelections.as_view(),name="py_selections"),  
+    path('dashboard/clients_api',views.ClientAPI.as_view(),name="clientAPI"),
+    path('dashboard/<slug:slug>/engagements_api',views.EngagementAPI.as_view(),name="engagementAPI"),
+
     
 ]

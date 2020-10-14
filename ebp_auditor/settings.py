@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from django.contrib.messages import constants as messages
+from pathlib import Path
+
 
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -52,14 +54,29 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'main.apps.MainConfig',
+    'django.contrib.sites',
+
+
     'crispy_forms',
     'django.contrib.humanize',
     'widget_tweaks',
     'main.templatetags.errors_extra',
     'rest_framework',
     'datatableview',
+    'allauth', # new
+    'allauth.account', # new
+
+    'main.apps.MainConfig',
+    'accounts.apps.AccountsConfig',
 ]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend', # new
+
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,7 +93,10 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
         "rest_framework.authentication.BasicAuthentication",
-    )
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+    ]
 }
 
 ROOT_URLCONF = 'ebp_auditor.urls'
@@ -84,7 +104,7 @@ ROOT_URLCONF = 'ebp_auditor.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [str(BASE_DIR.joinpath('templates'))],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -155,19 +175,46 @@ THOUSAND_SEPARATOR=','
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [str(BASE_DIR.joinpath('static'))] # new
+STATIC_ROOT = str(BASE_DIR.joinpath('staticfiles')) # new
+STATICFILES_FINDERS = [ # new
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+]
 
 
 
 
-MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+
+MEDIA_ROOT=str(BASE_DIR.joinpath('media'))
 MEDIA_URL='/media/'
 
-AUTH_USER_MODEL="main.User"
+AUTH_USER_MODEL="accounts.CustomUser"
 
-LOGIN_REDIRECT_URL="auditor_home"
-LOGOUT_REDIRECT_URL="login"
+LOGIN_REDIRECT_URL="client_dashboard"
+ACCOUNT_LOGOUT_REDIRECT = "login"
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend' # new
+ACCOUNT_SESSION_REMEMBER = True # new
+ACCOUNT_SIGNUP_PASSWORD_ENTER_TWICE = True # new
+ACCOUNT_AUTHENTICATION_METHOD = 'email' # new
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USERNAME_REQUIRED = False # new
+ACCOUNT_EMAIL_REQUIRED = True # new
+
+
+ACCOUNT_FORMS = {
+    'login': 'accounts.forms.MyCustomLoginForm',
+    'signup': 'accounts.forms.MyCustomSignUpForm',
+    'add_email': 'allauth.account.forms.AddEmailForm',
+    'change_password': 'allauth.account.forms.ChangePasswordForm',
+    'set_password': 'allauth.account.forms.SetPasswordForm',
+    'reset_password': 'allauth.account.forms.ResetPasswordForm',
+    'reset_password_from_key': 'allauth.account.forms.ResetPasswordKeyForm',
+    'disconnect': 'allauth.socialaccount.forms.DisconnectForm',
+}
 
 MESSAGE_TAGS ={
     messages.ERROR:'danger'

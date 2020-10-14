@@ -34,7 +34,7 @@ class ErrorAdmin(admin.ModelAdmin):
     list_display=("error_message",'participant')
 
 
-class UserAdmin(DjangoUserAdmin):
+'''class UserAdmin(DjangoUserAdmin):
     fieldsets=(
         (None,{"fields":("email","password")}),
         (
@@ -77,7 +77,8 @@ class UserAdmin(DjangoUserAdmin):
     )
     
     ordering=("email",)
-
+'''
+'''
 class ColoredAdminSite(admin.sites.AdminSite):
     def each_context(self,request):
         context=super().each_context(request)
@@ -105,9 +106,10 @@ class OwnersAdminSite(ReportingColoredAdminSite):
         return (
             request.user.is_active and request.user.is_superuser
         )
+'''
 
-main_admin=OwnersAdminSite()
-main_admin.register(models.User,UserAdmin)
+main_admin=admin.site
+#main_admin.register(models.User,UserAdmin)
 main_admin.register(models.client,ClientAdmin)
 main_admin.register(models.engagement,EngagementAdmin)
 main_admin.register(models.eligibility_rules,EligibilityRules)

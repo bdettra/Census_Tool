@@ -38,7 +38,7 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.form_is_valid) {
 
-                    $('#engagement_table tbody').html(data.engagements)
+                    $('#engagement_table').DataTable().ajax.reload();
                     
 
                     $('#modal-new_engagement').modal('hide');
@@ -226,8 +226,7 @@ $(document).ready(function () {
                     //$('#census_table tbody').html(data.engagements)
                     $('#census_table').DataTable().ajax.reload();
                     $('#modal-key_employee').modal('hide');
-                    console.log('Key Employee Form Saved');
-                    console.log(data.engagements)
+                    
                 }
                 else {
                     $('#modal-key_employee .modal-content').html(data.html_form)
@@ -280,7 +279,7 @@ $(document).ready(function () {
                     $('#census_table').DataTable().ajax.reload();
 
                     $('#modal-selections').modal('hide');
-                    console.log("Save Selections worked");
+                
                 }
                 else {
                     $('#modal-selections .modal-content').html(data.html_form)
@@ -404,6 +403,27 @@ $(document).ready(function () {
         $('#modal-delete_client').modal('hide');
         return false;
     };
+       //Defining the Save Delete Form variable
+       var SaveEngagementDeleteForm = function () {
+        var form =$(this);
+
+        $.ajax({
+            url: form.attr('data-url'),
+
+            data: form.serialize(),
+
+            type: form.attr('method'),
+
+            dataType:'json',
+
+            success: function (data){
+                $('#modal-delete_client').modal('hide');
+            }
+        });
+        $('#modal-delete_client').modal('hide');
+        return false;
+    };
+    
 
 
     //Defining the save form variable
@@ -422,7 +442,7 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.form_is_valid) {
 
-                    $('#client_table tbody').html(data.clients)
+                    $('#client_table').DataTable().ajax.reload();
 
                     $('#modal-new_client').modal('hide');
                 
@@ -582,10 +602,10 @@ $(document).ready(function () {
     //Update Census Table
     $('#census_list').on("click")
 
-    //Delete Engagement
+    /*
     $(".show-delete-form").click(ShowDeleteForm);
     $("#modal-delete_client").on("submit",".delete-form", SaveDeleteForm);
-
+    */
     //Show Errors
     $(".show-view_errors").click(ViewErrors);
 
