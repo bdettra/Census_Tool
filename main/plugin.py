@@ -7,8 +7,8 @@ import re
 
 def location_dict(columns):
     column_dict={"First Name":["First Name", "First"],"Last Name":["Last Name", "Last"],"SSN":["Social","SSN"],
-             "DOB":["Date of B","DOB"],"DOH":["Date of H", "DOH"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
-             "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked"],"Gross Wages":["Gross Wa", "Gross Wages"],
+             "DOB":["Date of B","DOB"],"DOH":["Date of H", "DOH", "Hire Date","hire date"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
+             "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked"],"Gross Wages":["Gross Wa", "Gross Wages", "Gross Comp", "Gross Compensation"],
              "Eligible Wages":["Eligible Wages","eligible wages","Eligible wages","eligible Wages","Eligible Wage","eligible wage"],
             "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax"],
              "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con"],
@@ -33,6 +33,8 @@ def location_dict(columns):
                 elif found==False:
                     counter+=1
     return location_dict
+
+
 
 def excluded_check(participant):
     if participant.excluded==True:
@@ -420,8 +422,14 @@ def previous_year_check(participant,py_engagement):
 
     return error_dict
 
-def contribution_check(participant,engagement):
-    if participant.EE_pre_tax_amount + participant.EE_roth_amount > int(19500):
+def contribution_check(participant,engagement,location_dict):
+    max_contributions = int(19000)
+
+    if location_dict["EE Catch-up"]==None:
+        max_contributions = int(25000)
+    
+    
+    if participant.EE_pre_tax_amount + participant.EE_roth_amount > max_contributions:
         error=models.error.objects.create(error_message="Employee contributions are greater than IRS limit",participant=participant)
         error.save()
 
@@ -435,6 +443,11 @@ def contribution_check(participant,engagement):
     if age < 50 and (participant.EE_catch_up + participant.ER_catch_up) > 0:
         error=models.error.objects.create(error_message="Employee is not eligible for catch-up contributions",participant=participant)
         error.save()
+    
+    elif location_dict["EE Catch-up"]==None and age < 50 and participant.EE_pre_tax_amount + participant.EE_roth_amount > int(19000):
+        error=models.error.objects.create(error_message="Employee is not eligible for catch-up contributions (No catch-up column)",participant=participant)
+        error.save()
+    
         
 
 def eligible_wages_check(participant,engagement):

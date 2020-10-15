@@ -201,8 +201,10 @@
 
 <div class="ajaxProgress">
     <h3>Loading</h3>
-    <img src="{% static 'main/images/ajax-loader.gif' %}" alt="loading"/>
+    <img src="{% static 'images/ajax-loader.gif' %}" alt="loading"/>
 </div>
+
+
 
 
 
@@ -212,6 +214,8 @@
 {% block scripts %}
     <script>
         $(document).ready(function(){
+
+
             var endpoint="{% url 'participantsAPI' client.slug engagement.slug %}";
 
             function numberWithCommas(x) {
@@ -342,6 +346,11 @@
                                 $('td:eq(13)',row).css('background-color','#F08080'); 
                                 $('td:eq(13)',row).attr('title',error)
                                 $('td:eq(13)',row).attr('data-toggle',"tooltip")
+                            }
+                            if (error == "Employee is not eligible for catch-up contributions (No catch-up column)"){
+                                $('td:eq(14)',row).css('background-color','#F08080'); 
+                                $('td:eq(14)',row).attr('title',error)
+                                $('td:eq(14)',row).attr('data-toggle',"tooltip")
                             }
                             if (error == "Employee is ineligible and is participating"){
                                 $('td:eq(23)',row).css('background-color','#F08080'); 

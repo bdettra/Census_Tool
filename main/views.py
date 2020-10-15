@@ -579,19 +579,81 @@ class UploadCensus(TemplateView):
         
         #Creating a columns variable from our dataset 
         columns=data.columns
-
+        location_dict=plugin.location_dict(columns)
+        print(location_dict)
         #Converting the DOB, DOH and DORH columns into datetime objects. If reload the engagement page
-        try:
+        
+        '''try:
             data['DOB']=pd.to_datetime(data['DOB'],format="%m/%d/%y")
+        except:
+            messages.error(self.request,"There is an invalid data point in the DOB column.")
+            return render(request,"engagement_page.html",context=context)
+        try:
             data['DOH']=pd.to_datetime(data['DOH'],format="%m/%d/%y")
+        except:
+            messages.error(self.request,"There is an invalid data point in the DOB column.")
+            return render(request,"engagement_page.html",context=context)
+        try:
             data['DOT']=pd.to_datetime(data['DOT'],format="%m/%d/%y")
+        except:
+            messages.error(self.request,"There is an invalid data point in the DOB column.")
+            return render(request,"engagement_page.html",context=context)
+        try:
             data['DORH']=pd.to_datetime(data['DORH'],format="%m/%d/%y")
+        except:
+            messages.error(self.request,"There is an invalid data point in the DOB column.")
+            return render(request,"engagement_page.html",context=context)
+            
+            data['Hours Worked']=pd.to_numeric(data['Hours Worked'])
+            data['Gross Wages']=pd.to_numeric(data['Gross Wages'])
+            data['Eligible Wages']=pd.to_numeric(data['Eligible Wages'])
+            print(data['EE pre-tax'])
+            data['EE Roth']=pd.to_numeric(data['EE Roth'])
+            #data['ER pre-tax']=pd.to_numeric(data['ER pre-tax'])
+        
+            data['ER Roth']=pd.to_numeric(data['ER Roth'])
+            data['EE Catch-up']=pd.to_numeric(data['EE Catch-up'])
+            
+            #data['ER Catch-up']=pd.to_numeric(data['ER Catch-up'])
         except Exception as e:
             print('There was an error:{0}'.format(e))
             messages.error(self.request,"There is an invalid data point in the DOB,DOH or DORH columns")
             return render(request,"engagement_page.html",context=context)
+        '''
 
         location_dict=plugin.location_dict(columns)
+        found_columns=location_dict.keys()
+        application_columns = ["First Name","Last Name","SSN","DOB","DOH","DOT","DORH",
+                                "Excluded","Hours Worked","Gross Wages","Eligible Wages",
+                                "EE pre-tax","ER pre-tax","EE Roth","ER Roth","EE Catch-up","ER Catch-up"]
+        for i in application_columns:
+            if i in found_columns:
+                pass
+            else:
+                location_dict[i]=None
+
+        if location_dict["First Name"]==None:
+            messages.error(self.request,"The census is missing a First Name column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        elif location_dict["Last Name"]==None:
+            messages.error(self.request,"The census is missing a Last Name column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        elif location_dict["SSN"]==None:
+            messages.error(self.request,"The census is missing a SSN column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        elif location_dict["DOB"]==None:
+            messages.error(self.request,"The census is missing a DOB column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        elif location_dict["DOH"]==None:
+            messages.error(self.request,"The census is missing a DOH column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        elif location_dict["DOT"]==None:
+            messages.error(self.request,"The census is missing a DOT column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        elif location_dict["DORH"]==None:
+            messages.error(self.request,"The census is missing a DORH column. Stopped processing")
+            return render(request,"engagement_page.html",context=context)
+        
 
         for i,x in data.iterrows():
             if pd.isnull(data.iloc[i,location_dict['SSN']])==False:
@@ -625,6 +687,12 @@ class UploadCensus(TemplateView):
                 #messages.error(self.request,"One of the participants is missing a Last Name Value")
 
             if pd.isnull(data.iloc[i,location_dict['DOB']])==False:
+                try:
+                    data.iloc[i,location_dict['DOB']]=pd.to_datetime(data.iloc[i,location_dict['DOB']],format="%m/%d/%y")
+                except:
+                    messages.error(self.request,"There is an invalid data point in the DOB column at row " + str(i+1) +".")
+                    return render(request,"engagement_page.html",context=context)
+
                 participant.DOB=data.iloc[i,location_dict['DOB']].date()
             else:
                 error=models.error.objects.create(participant=participant,error_message="DOB data is missing")
@@ -633,6 +701,11 @@ class UploadCensus(TemplateView):
                 return render(request,"engagement_page.html",context=context)
 
             if pd.isnull(data.iloc[i,location_dict['DOH']])==False:
+                try:
+                    data.iloc[i,location_dict['DOH']]=pd.to_datetime(data.iloc[i,location_dict['DOH']],format="%m/%d/%y")
+                except:
+                    messages.error(self.request,"There is an invalid data point in the DOH column at row " + str(i+1) +".")
+                    return render(request,"engagement_page.html",context=context)
                 participant.DOH=data.iloc[i,location_dict['DOH']].date()
             else:
                 error=models.error.objects.create(participant=participant,error_message="DOH data is missing")
@@ -640,6 +713,12 @@ class UploadCensus(TemplateView):
                 return render(request,"engagement_page.html",context=context)
 
             if pd.isnull(data.iloc[i,location_dict['DOT']])==False:
+                try:
+                    data.iloc[i,location_dict['DOT']]=pd.to_datetime(data.iloc[i,location_dict['DOT']],format="%m/%d/%y")
+                except:
+                    messages.error(self.request,"There is an invalid data point in the DOT column at row " + str(i+1) +".")
+                    return render(request,"engagement_page.html",context=context)
+
                 participant.DOT=data.iloc[i,location_dict['DOT']].date()
                 participant.save()
                 if participant.DOT < (engagement.date - relativedelta(years=1)):
@@ -647,9 +726,18 @@ class UploadCensus(TemplateView):
                     #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
 
             if pd.isnull(data.iloc[i,location_dict['DORH']])==False:
+                try:
+                    data.iloc[i,location_dict['DORH']]=pd.to_datetime(data.iloc[i,location_dict['DORH']],format="%m/%d/%y")
+                except:
+                    messages.error(self.request,"There is an invalid data point in the DOT column at row " + str(i+1) +".")
+                    return render(request,"engagement_page.html",context=context)
+
                 participant.DORH=data.iloc[i,location_dict['DORH']].date()
 
-            if pd.isnull(data.iloc[i,location_dict["Excluded"]])==False:
+            if location_dict["Excluded"]==None:
+                participant.excluded=False
+
+            elif pd.isnull(data.iloc[i,location_dict["Excluded"]])==False:
                 excluded=data.iloc[i,location_dict['Excluded']]
 
                 no_values=[None,"No",'no']
@@ -663,39 +751,142 @@ class UploadCensus(TemplateView):
                 else:
                     messages.error(self.request,"There is an invalid data point in the Excluded colmun at row " + str(i+1) + ". Values in this column must be Yes/No. Census stopped processing on this row.")
                     return render(request,"engagement_page.html",context=context)
+            else:
+                participant.excluded=False
 
-            if pd.isnull(data.iloc[i,location_dict['Hours Worked']])==False:
+            if location_dict["Hours Worked"]==None:
+                participant.hours_worked=0
+
+            elif pd.isnull(data.iloc[i,location_dict['Hours Worked']])==False:
+                try:
+                    data.iloc[i,location_dict['Hours Worked']]=pd.to_numeric(data.iloc[i,location_dict['Hours Worked']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the Hours Worked column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
+                    
                 participant.hours_worked=data.iloc[i,location_dict['Hours Worked']]
             else:
-                
                 error=models.error.objects.create(participant=participant,error_message="Hours worked data is missing")
                 #messages.error(self.request,"One of the participants is missing an 'Hours Worked' value")
 
-            if pd.isnull(data.iloc[i,location_dict['Gross Wages']])==False:
+
+            if location_dict["Gross Wages"]==None:
+                participant.gross_wages=0
+
+            elif pd.isnull(data.iloc[i,location_dict['Gross Wages']])==False:
+                try:
+                    data.iloc[i,location_dict['Gross Wages']]=pd.to_numeric(data.iloc[i,location_dict['Gross Wages']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the Gross Wages column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
+
                 participant.gross_wages=data.iloc[i,location_dict['Gross Wages']]
+            else:
+                participant.gross_wages=0
             
             
-            if pd.isnull(data.iloc[i,location_dict['Eligible Wages']])==False:
+            if location_dict["Eligible Wages"]==None:
+                    participant.eligible_wages=0
+
+            elif pd.isnull(data.iloc[i,location_dict['Eligible Wages']])==False:
+                try:
+                    data.iloc[i,location_dict['Eligible Wages']]=pd.to_numeric(data.iloc[i,location_dict['Eligible Wages']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the Eligible Wages column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
                 participant.eligible_wages=data.iloc[i,location_dict['Eligible Wages']]
 
-            if pd.isnull(data.iloc[i,location_dict['EE pre-tax']])==False:
+            else:
+                participant.eligible_wages=0
+
+
+
+            if location_dict["EE pre-tax"]==None:
+                participant.EE_pre_tax_amount=0
+
+            elif pd.isnull(data.iloc[i,location_dict['EE pre-tax']])==False:
+                try:
+                    data.iloc[i,location_dict['EE pre-tax']]=pd.to_numeric(data.iloc[i,location_dict['EE pre-tax']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the EE pre-tax column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
                 participant.EE_pre_tax_amount=data.iloc[i,location_dict['EE pre-tax']]
 
+            else:
+                participant.EE_pre_tax_amount=0
 
-            if pd.isnull(data.iloc[i,location_dict['ER pre-tax']])==False:
+            if location_dict["ER pre-tax"]==None:
+                participant.ER_pre_tax_amount=0    
+
+            elif pd.isnull(data.iloc[i,location_dict['ER pre-tax']])==False:
+                try:
+                    data.iloc[i,location_dict['ER pre-tax']]=pd.to_numeric(data.iloc[i,location_dict['ER pre-tax']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the ER pre-tax column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
                 participant.ER_pre_tax_amount=data.iloc[i,location_dict['ER pre-tax']]
 
-            if pd.isnull(data.iloc[i,location_dict['EE Roth']])==False:
+            else:
+                participant.ER_pre_tax_amount = 0
+
+            if location_dict['EE Roth']==None:
+                participant.EE_roth_amount=0
+
+            elif pd.isnull(data.iloc[i,location_dict['EE Roth']])==False:
+                try:
+                    data.iloc[i,location_dict['EE Roth']]=pd.to_numeric(data.iloc[i,location_dict['EE Roth']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the EE Roth column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
+
                 participant.EE_roth_amount=data.iloc[i,location_dict['EE Roth']]
 
-            if pd.isnull(data.iloc[i,location_dict['ER Roth']])==False:
+            else:
+                participant.EE_roth_amount = 0
+
+
+            if location_dict['ER Roth']==None:
+                participant.ER_roth_amount=0
+
+            elif pd.isnull(data.iloc[i,location_dict['ER Roth']])==False:
+                try:
+                    data.iloc[i,location_dict['ER Roth']]=pd.to_numeric(data.iloc[i,location_dict['ER Roth']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the ER Roth column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
+
                 participant.ER_roth_amount=data.iloc[i,location_dict['ER Roth']]
             
-            if pd.isnull(data.iloc[i,location_dict['EE Catch-up']])==False:
+            else:
+                participant.ER_roth_amount = 0
+
+            if location_dict['EE Catch-up']==None:
+                participant.EE_catch_up=0
+            
+            elif pd.isnull(data.iloc[i,location_dict['EE Catch-up']])==False:
+                try:
+                    data.iloc[i,location_dict['EE Catch-up']]=pd.to_numeric(data.iloc[i,location_dict['EE Catch-up']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the EE Catch-up column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
                 participant.EE_catch_up=data.iloc[i,location_dict['EE Catch-up']]
             
-            if pd.isnull(data.iloc[i,location_dict['ER Catch-up']])==False:
+            else:
+                participant.EE_catch_up=0
+
+            if location_dict['ER Catch-up']==None:
+                participant.ER_catch_up=0
+
+            elif pd.isnull(data.iloc[i,location_dict['ER Catch-up']])==False:
+                try:
+                    data.iloc[i,location_dict['ER Catch-up']]=pd.to_numeric(data.iloc[i,location_dict['ER Catch-up']])
+                except:
+                    messages.error(self.request, "There is an invalid data point in the ER Catch-up column at row " + str(i+1) + ".")
+                    return render(request,"engagement_page.html",context=context)
                 participant.ER_catch_up=data.iloc[i,location_dict['ER Catch-up']]
+
+            else:
+                participant.ER_catch_up=0
 
             participant.total_EE_deferral= participant.EE_pre_tax_amount + participant.EE_roth_amount + participant.EE_catch_up
             participant.total_ER_deferral= participant.ER_pre_tax_amount + participant.ER_roth_amount + participant.ER_catch_up
@@ -716,7 +907,7 @@ class UploadCensus(TemplateView):
                         messages.error(self.request,value)
 
             #Checking for Contribution & Wage Errors
-            plugin.contribution_check(participant,engagement)
+            plugin.contribution_check(participant,engagement, location_dict)
             plugin.eligible_wages_check(participant,engagement)
 
             

@@ -182,6 +182,7 @@ $(document).ready(function () {
         })
     };
 
+
     //Defining the Show Key Employee Form Variable
     var KeyEmployeeForm = function (){
         $('.ajaxProgress').show()
@@ -588,6 +589,8 @@ $(document).ready(function () {
 
     //Show Upload Census Form
     $(".upload-census_form").click(ShowCensusForm);
+
+    
 
     
     //Update Client List

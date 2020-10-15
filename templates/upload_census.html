@@ -13,6 +13,11 @@
     </div>
         
     <div class="modal-body">
+        <div id="progress-bar" style="display:none;">
+            <div class="progress-label" style=" position:absolute; left: 34%; top: 18px; font-weight:bold; padding-bottom: 3px;">
+                Importing Census Data
+            </div>
+        </div>
         <div class="form-group">
             <div class="col-md-10">
                 {{form.filename}}
@@ -36,10 +41,48 @@
         
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
 
-        <button type="submit-census" class="btn btn-primary">Upload</button>
+        <button type="submit-census" class="btn btn-primary" id="census_submit">Upload</button>
 
     </div>
 
 </form>
 
+      <style>
+         .ui-widget-header {
+            background: #cedc98;
+            border: 1px solid #DDDDDD;
+            color: #333333;
+            font-weight: bold;
+            padding-bottom:5px;
+         }
+      </style>
+
 {% endblock content %}
+
+<script>
+    $(document).ready(function(){
+        var ShowCensusProgressBar = function(){
+            console.log("Progress Bart Should be shwoing")
+            var progressbar = $("#progress-bar");
+            var progressLabel = $(".progress-label");
+            $("#progress-bar").show();
+            progressbar.display = "block";
+            $("#progress-bar").progressbar({
+                value: 20,
+                max:100
+            });
+
+            function progress() {
+               var val = progressbar.progressbar( "value" ) || 0;
+               progressbar.progressbar( "value", val + 1 );
+               if ( val < 99 ) {
+                  setTimeout( progress, 100 );
+               }
+            }
+            setTimeout( progress, 3000 );
+        };
+
+            //Show UploadCensus Progress Bar
+            $("#census_submit").click(ShowCensusProgressBar);
+    });
+</script>

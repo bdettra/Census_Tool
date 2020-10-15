@@ -92,6 +92,7 @@ class error(models.Model):
         ("Eligible wages are greater than IRS limit","Eligible wages are greater than IRS limit"),
         ("Employee contributions are greater than IRS limit","Employee contributions are greater than IRS limit"),
         ("Employee is not eligible for catch-up contributions","Employee is not eligible for catch-up contributions"),
+        ("Employee is not eligible for catch-up contributions (No catch-up column)","Employee is not eligible for catch-up contributions (No catch-up column)"),
         ("Employee is excluded but is participating","Employee is excluded but is particiapting"),
     )
     error_message=models.CharField(choices=CHOICES,max_length=100,null=True)
