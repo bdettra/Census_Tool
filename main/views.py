@@ -137,8 +137,10 @@ class createClientView(LoginRequiredMixin,TemplateView):
         return JsonResponse(data)
 
 
-class ClientDeleteView(DeleteView):
+class ClientDeleteView(LoginRequiredMixin,DeleteView):
     '''Deletes a client from the database'''
+
+    login_url='/accounts/login/'
 
     model=models.client
     success_url=reverse_lazy('client_dashboard')
@@ -280,30 +282,10 @@ class EditEligibility(TemplateView):
 
         if form.is_valid():
             form.save(engagement)
-        '''
-        age=request.POST.get('age')
-        service_hours=request.POST.get('service_hours')
-        service_days=request.POST.get('service_days')
-        service_months=request.POST.get('service_months')
-        service_years=request.POST.get('service_years')
-        excluded_employees=request.POST.get('excluded_employees')
-        entry_date=request.POST.get('entry_date')
-    
         
-        '''
         client=models.client.objects.get(slug=slug)
         eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
-        '''
-        eligibility_rules.age=age
-        eligibility_rules.service_hours=service_hours
-        eligibility_rules.service_days=service_days
-        eligibility_rules.service_months=service_months
-        eligibility_rules.service_years=service_years
-        eligibility_rules.excluded_employees=excluded_employees
-        eligibility_rules.entry_date=entry_date
-        eligibility_rules.save()
-        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
-        '''
+        
         participants=models.participant.objects.filter(engagement=engagement)
         
         if len(participants)>0:
@@ -336,15 +318,11 @@ class EditEligibility(TemplateView):
 
         context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
 
-
-
         data['engagements']=render_to_string('eligibility_rules.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
-        #data['engagements1']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
-
         
         data['form_is_valid']=True
         data['html_form']=render_to_string('edit_eligibility.html',context,request=request)
-        print("Posting Correctly")
+        
         return JsonResponse(data)
 
 
@@ -575,52 +553,17 @@ class UploadCensus(TemplateView):
             py_participants=models.participant.objects.filter(engagement=py_engagement)
 
         #Reading in the excel file that is uploaded as a pandas table
-        data=pd.read_excel(request.FILES['filename'])
+        try:
+            data=pd.read_excel(request.FILES['filename'])
+        except:
+            messages.error(self.request,"The file that imported is not in excel format")
+            return render(request,"engagement_page.html",context=context)
         
         #Creating a columns variable from our dataset 
         columns=data.columns
         location_dict=plugin.location_dict(columns)
-        print(location_dict)
-        #Converting the DOB, DOH and DORH columns into datetime objects. If reload the engagement page
-        
-        '''try:
-            data['DOB']=pd.to_datetime(data['DOB'],format="%m/%d/%y")
-        except:
-            messages.error(self.request,"There is an invalid data point in the DOB column.")
-            return render(request,"engagement_page.html",context=context)
-        try:
-            data['DOH']=pd.to_datetime(data['DOH'],format="%m/%d/%y")
-        except:
-            messages.error(self.request,"There is an invalid data point in the DOB column.")
-            return render(request,"engagement_page.html",context=context)
-        try:
-            data['DOT']=pd.to_datetime(data['DOT'],format="%m/%d/%y")
-        except:
-            messages.error(self.request,"There is an invalid data point in the DOB column.")
-            return render(request,"engagement_page.html",context=context)
-        try:
-            data['DORH']=pd.to_datetime(data['DORH'],format="%m/%d/%y")
-        except:
-            messages.error(self.request,"There is an invalid data point in the DOB column.")
-            return render(request,"engagement_page.html",context=context)
-            
-            data['Hours Worked']=pd.to_numeric(data['Hours Worked'])
-            data['Gross Wages']=pd.to_numeric(data['Gross Wages'])
-            data['Eligible Wages']=pd.to_numeric(data['Eligible Wages'])
-            print(data['EE pre-tax'])
-            data['EE Roth']=pd.to_numeric(data['EE Roth'])
-            #data['ER pre-tax']=pd.to_numeric(data['ER pre-tax'])
-        
-            data['ER Roth']=pd.to_numeric(data['ER Roth'])
-            data['EE Catch-up']=pd.to_numeric(data['EE Catch-up'])
-            
-            #data['ER Catch-up']=pd.to_numeric(data['ER Catch-up'])
-        except Exception as e:
-            print('There was an error:{0}'.format(e))
-            messages.error(self.request,"There is an invalid data point in the DOB,DOH or DORH columns")
-            return render(request,"engagement_page.html",context=context)
-        '''
 
+    
         location_dict=plugin.location_dict(columns)
         found_columns=location_dict.keys()
         application_columns = ["First Name","Last Name","SSN","DOB","DOH","DOT","DORH",
