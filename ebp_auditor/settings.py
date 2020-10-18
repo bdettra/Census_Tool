@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'datatableview',
     'allauth', # new
     'allauth.account', # new
+    'guardian',
 
     'main.apps.MainConfig',
     'accounts.apps.AccountsConfig',
@@ -75,6 +76,7 @@ SITE_ID = 1
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend', # new
+    'guardian.backends.ObjectPermissionBackend',
 
 )
 

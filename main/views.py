@@ -2,7 +2,7 @@ from . import models, forms
 from django.core.mail import send_mail
 from datetime import datetime
 from django.shortcuts import render, get_object_or_404
-from django.http import HttpRequest, JsonResponse, HttpResponseRedirect, HttpResponse
+from django.http import HttpRequest, JsonResponse, HttpResponseRedirect, HttpResponse, HttpResponseForbidden
 from django.views.generic.edit import FormView, DeleteView, UpdateView
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth import login, authenticate
@@ -25,7 +25,8 @@ from rest_framework import generics
 from . import serializer
 import re
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.mixins import LoginRequiredMixin
+from rest_framework.exceptions import PermissionDenied
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 
 def home(request):
@@ -229,17 +230,56 @@ class CreateEngagement(TemplateView):
         return JsonResponse(data)    
 
 
-@login_required
+
+'''@login_required
 def client_page(request,slug):
     client=models.client.objects.get(slug=slug)
     engagements=models.engagement.objects.filter(client=client)
     context={"client":client,"engagements":engagements}
 
-    return render(request,"client_page.html",context)
+    return render(request,"client_page.html",context)'''
 
-class EngagementView(TemplateView):
+class ClientPageView(UserPassesTestMixin,TemplateView):
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
+
+    def get(self,request,slug):
+        client=models.client.objects.get(slug=slug)
+        engagements=models.engagement.objects.filter(client=client)
+        context={"client":client,"engagements":engagements}
+
+        return render(request,"client_page.html",context)
+    
+
+class EngagementView(UserPassesTestMixin, TemplateView):
 
     template_name="engagement_page.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
+
+
 
     def get(self,request, slug, Eslug, *args,**kwargs):
 
@@ -258,10 +298,24 @@ class EngagementView(TemplateView):
         context={'census_form':census_form,'client':client,'engagement':engagement,"eligibility_rules":eligibility_rules,"participants":participants,"errors":errors}
 
         return render(request,"engagement_page.html",context=context)
+        
 
 
-class EditEligibility(TemplateView):
+class EditEligibility(UserPassesTestMixin, TemplateView):
     template_name="edit_eligibility.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request, slug, Eslug, *args,**kwargs):
         data=dict()
@@ -327,8 +381,21 @@ class EditEligibility(TemplateView):
 
 
         
-class KeyEmployee(TemplateView):
+class KeyEmployee(UserPassesTestMixin, TemplateView):
     template_name="key_employee.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request, slug, Eslug, *args,**kwargs):
         data=dict()
@@ -380,9 +447,22 @@ class KeyEmployee(TemplateView):
 
         return JsonResponse(data) 
 
-class CensusStatistics(TemplateView):
+class CensusStatistics(UserPassesTestMixin, TemplateView):
 
     template_name="census_statistics.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
@@ -412,9 +492,22 @@ class CensusStatistics(TemplateView):
         return JsonResponse(data)
 
 
-class MakeSelections(TemplateView):
+class MakeSelections(UserPassesTestMixin, TemplateView):
 
     template_name="make_selections.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
@@ -455,7 +548,20 @@ class MakeSelections(TemplateView):
     
         return JsonResponse(data) 
 
-class EditClient(TemplateView):
+class EditClient(UserPassesTestMixin, TemplateView):
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
 
     template_name="edit_client.html"
@@ -490,8 +596,21 @@ class EditClient(TemplateView):
         
 
 
-class ViewSelections(TemplateView):
+class ViewSelections(UserPassesTestMixin, TemplateView):
     template_name="view_selections.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request,slug,Eslug):
         data=dict()
@@ -506,8 +625,21 @@ class ViewSelections(TemplateView):
         
         return JsonResponse(data)
 
-class UploadCensus(TemplateView):
+class UploadCensus(UserPassesTestMixin, TemplateView):
     template_name="upload_census.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request,slug,Eslug):
         data=dict()
@@ -966,8 +1098,21 @@ def export_selections(request,slug,Eslug):
     wb.save(response)
     return response
 
-class PreviousSelections(TemplateView):
+class PreviousSelections(UserPassesTestMixin, TemplateView):
     template_name="py_selections.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request,slug,Eslug,*args,**kwargs):
         data=dict()
@@ -987,8 +1132,21 @@ class PreviousSelections(TemplateView):
 
 
 
-class ViewErrors(TemplateView):
+class ViewErrors(UserPassesTestMixin, TemplateView):
     template_name="view_errors_updated.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
 
     def get(self,request,slug,Eslug,*args,**kwargs):
         data=dict()
@@ -1123,11 +1281,16 @@ class ParticipantAPI(generics.ListAPIView):
     serializer_class=serializer.ParticipantSerializer
 
     def get_queryset(self):
+        user = self.request.user
+
         client=models.client.objects.get(slug=self.kwargs['slug'])
-        engagement=models.engagement.objects.get(slug=self.kwargs['Eslug'])
-        participants=models.participant.objects.filter(engagement=engagement)
+        if client in user.client_set.all():
+            engagement=models.engagement.objects.get(slug=self.kwargs['Eslug'])
+            participants=models.participant.objects.filter(engagement=engagement)
         
-        return participants
+            return participants
+        else:
+            raise PermissionDenied({"message":"You do not have permission to access"})
 
 class ClientAPI(generics.ListAPIView):
     permission_classes=[IsAuthenticated]
@@ -1142,10 +1305,14 @@ class EngagementAPI(generics.ListAPIView):
     serializer_class=serializer.EngagementSerializer
 
     def get_queryset(self):
+        user = self.request.user
         client=models.client.objects.get(slug=self.kwargs['slug'])
-        engagements=models.engagement.objects.filter(client=client) 
 
-        return engagements    
+        if client in user.client_set.all():
+            engagements=models.engagement.objects.filter(client=client) 
+            return engagements    
+        else:
+            raise PermissionDenied({"message":"You do not have permission to access"})
 
 
 
