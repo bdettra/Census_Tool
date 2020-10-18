@@ -12,12 +12,16 @@ class client(models.Model):
     users=models.ManyToManyField(get_user_model())
     slug=models.SlugField()
 
+    primary_user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE, related_name="primary_client_user")
+
 class engagement(models.Model):
     name=models.CharField(max_length=50,verbose_name="Engagement Name: ")
     date=models.DateField()
     client=models.ForeignKey(client,on_delete=models.CASCADE)
     slug=models.SlugField()
     soc_1_reliance=models.BooleanField(default=False)
+
+    primary_user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE, related_name="primary_engagement_user")
 
 class eligibility_rules(models.Model):
     CHOICES=(

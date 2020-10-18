@@ -121,8 +121,9 @@ class createClientView(LoginRequiredMixin,TemplateView):
             name=request.POST.get('name')
             number=request.POST.get('number')
             users=request.POST.get('users')
+            primary_user=request.user
             slug=slugify(name)
-            instance=models.client.objects.create(name=name,number=number,slug=slug)
+            instance=models.client.objects.create(name=name,number=number,slug=slug,primary_user=primary_user)
             instance.users.set(users)
             data['form_is_valid']=True
 
@@ -138,7 +139,7 @@ class createClientView(LoginRequiredMixin,TemplateView):
         return JsonResponse(data)
 
 
-class ClientDeleteView(LoginRequiredMixin,DeleteView):
+class ClientDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     '''Deletes a client from the database'''
 
     login_url='/accounts/login/'
@@ -147,11 +148,30 @@ class ClientDeleteView(LoginRequiredMixin,DeleteView):
     success_url=reverse_lazy('client_dashboard')
     template_name="client_dashboard.html"
 
-class EngagementDeleteView(DeleteView):
+
+    def test_func(self):
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+        primary_user = client.primary_user
+
+        print(primary_user.email)
+        return self.request.user == primary_user
+
+class EngagementDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     '''Deletes an engagement from the database'''
     model=models.engagement
     slug_url_kwarg="Eslug"
     template_name="client_page.html"
+    login_url="/accounts/login/"
+
+    def test_func(self):
+        client_slug=self.kwargs.pop("slug")
+        engagement_slug=self.kwargs.pop("Eslug")
+
+        client = models.client.objects.get(slug=client_slug)
+        engagement= models.engagement.objects.get(slug=engagement_slug)
+
+        return self.request.user == engagement.primary_user
 
     def get_success_url(self):
         client=self.object.client
@@ -203,7 +223,8 @@ class CreateEngagement(TemplateView):
 
             #Slugify the name data and then create a new engagement.
             slug_name=slugify(name) 
-            instance=models.engagement.objects.create(name=name,date=date,slug=slug_name, client=client_object)
+            primary_user=request.user
+            instance=models.engagement.objects.create(name=name,date=date,slug=slug_name, client=client_object,primary_user=primary_user)
             data['form_is_valid']=True
 
             #Getting all engagements under this client.
@@ -239,7 +260,9 @@ def client_page(request,slug):
 
     return render(request,"client_page.html",context)'''
 
-class ClientPageView(UserPassesTestMixin,TemplateView):
+class ClientPageView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+
+    login_url = "/accounts/login"
 
     def test_func(self):
         user = self.request.user
@@ -548,7 +571,9 @@ class MakeSelections(UserPassesTestMixin, TemplateView):
     
         return JsonResponse(data) 
 
-class EditClient(UserPassesTestMixin, TemplateView):
+class EditClient(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+
+    login_url="/accounts/login/"
 
     def test_func(self):
         user = self.request.user
@@ -596,8 +621,10 @@ class EditClient(UserPassesTestMixin, TemplateView):
         
 
 
-class ViewSelections(UserPassesTestMixin, TemplateView):
+class ViewSelections(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name="view_selections.html"
+
+    login_url = "/accounts/login"
 
     def test_func(self):
         user = self.request.user
@@ -625,8 +652,10 @@ class ViewSelections(UserPassesTestMixin, TemplateView):
         
         return JsonResponse(data)
 
-class UploadCensus(UserPassesTestMixin, TemplateView):
+class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name="upload_census.html"
+
+    login_url="/accounts/login/"
 
     def test_func(self):
         user = self.request.user
@@ -1098,8 +1127,10 @@ def export_selections(request,slug,Eslug):
     wb.save(response)
     return response
 
-class PreviousSelections(UserPassesTestMixin, TemplateView):
+class PreviousSelections(LoginRequiredMixin,UserPassesTestMixin, TemplateView):
     template_name="py_selections.html"
+
+    login_url="/accounts/login/"
 
     def test_func(self):
         user = self.request.user
@@ -1132,8 +1163,10 @@ class PreviousSelections(UserPassesTestMixin, TemplateView):
 
 
 
-class ViewErrors(UserPassesTestMixin, TemplateView):
+class ViewErrors(LoginRequiredMixin,UserPassesTestMixin, TemplateView):
     template_name="view_errors_updated.html"
+
+    login_url="/accounts/login/"
 
     def test_func(self):
         user = self.request.user
