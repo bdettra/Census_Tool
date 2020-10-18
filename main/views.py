@@ -576,17 +576,12 @@ class EditClient(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     login_url="/accounts/login/"
 
     def test_func(self):
-        user = self.request.user
-        
         client_slug = self.kwargs.pop("slug")
         client = models.client.objects.get(slug=client_slug)
+        primary_user = client.primary_user
 
-        if client in user.client_set.all():
-            test=True
-        else:
-            test=False
-        
-        return test
+        print(primary_user.email)
+        return self.request.user == primary_user
 
 
     template_name="edit_client.html"
