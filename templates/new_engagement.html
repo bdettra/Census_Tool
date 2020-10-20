@@ -29,6 +29,14 @@
             </div>
         </div>
     </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="engagement_date" class="col-md-2 control-label">Soc 1 Reliance</label>
+            <div class="col-md-10">
+                {{form.soc_1_reliance}}
+            </div>
+        </div>
+    </div>
         {% if form.errors %}
         {% for field in form %}
             {% for error in field.errors %}

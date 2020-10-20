@@ -46,6 +46,7 @@
             </button>
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
                 <li role="presentation"><a class="dropdown-item show-selections_form" data-url="{% url 'make_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Make Selections</a></li>
+                <li role="presentation"><a class="dropdown-item show-edit_selections_form" data-url="{% url 'edit_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Edit Selections</a></li>
                 <li role="presentation"><a class="dropdown-item view-selections_form" data-toggle="modal" data-url="{% url 'view_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1">View Selections</a></li>
                 <li role="presentation"><a class="dropdown-item show-py_selections" data-toggle="modal" data-url="{% url 'py_selections' client.slug engagement.slug %}" role="menuitem" tabindex="-1">View Previous Year Selections</a></li>
             </ul>
@@ -104,6 +105,12 @@
 </div>
 
 <div class="modal fade" id="modal-selections">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-edit_selections">
     <div class="modal-dialog">
         <div class="modal-content"></div>
     </div>

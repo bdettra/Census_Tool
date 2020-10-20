@@ -571,6 +571,60 @@ class MakeSelections(UserPassesTestMixin, TemplateView):
     
         return JsonResponse(data) 
 
+class EditSelections(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+
+    login_url="/accounts/login/"
+
+    def test_func(self):
+        client_slug=self.kwargs.pop("slug")
+        engagement_slug=self.kwargs.pop("Eslug")
+
+        client = models.client.objects.get(slug=client_slug)
+        engagement= models.engagement.objects.get(slug=engagement_slug)
+
+        return self.request.user == engagement.primary_user   
+
+    def get(self, request, slug, Eslug, *args, **kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
+        participants=models.participant.objects.filter(engagement=engagement)
+
+        FormSet = modelformset_factory(models.participant, form = forms.EditSelection, extra=0)
+        formset=FormSet(queryset=participants)
+
+        context_object={'formset':formset,"client":client,"engagement":engagement,"eligibility_rules":eligibility_rules,"participants":participants}
+        data['html_form']=render_to_string("edit_selections.html",context_object,request=request)
+
+        return JsonResponse(data)
+
+    def post(self,request, slug, Eslug, *args, **kwargs):
+        data=dict()
+        FormSet = modelformset_factory(models.participant, form=forms.EditSelection,extra=0)
+        formset=FormSet(request.POST,request.FILES)
+        instance=formset.save()
+
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        participants=models.participant.objects.filter(engagement=engagement)
+      
+
+
+        eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        
+
+
+        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,}
+
+        #data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
+        
+        data['form_is_valid']=True
+        data['html_form']=render_to_string('edit_selections.html',context,request=request)
+
+        return JsonResponse(data) 
+
+
 class EditClient(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
     login_url="/accounts/login/"
@@ -613,6 +667,51 @@ class EditClient(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         data['html_form']=render_to_string('edit_client.html',context_object,request=request)
         
         return JsonResponse(data)
+
+class EditPrimaryClientUser(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+
+    login_url="/accounts/login/"
+
+    def test_func(self):
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+        primary_user = client.primary_user
+
+        print(primary_user.email)
+        return self.request.user == primary_user
+
+
+    template_name="edit_client_primary_user.html"
+
+    def get(self,request,slug,*args,**kwargs):
+        print("Working")
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        form=forms.EditClientUserForm(instance=client,client=client)
+
+        context_object={"client":client,"form":form}
+        data['html_form']=render_to_string('edit_client_primary_user.html',context_object,request=request)
+        
+        return JsonResponse(data)
+
+    def post(self,request,slug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        form=forms.EditClientUserForm(client,request.POST)
+        data['form_is_valid']=False
+        if form.is_valid():
+            form.save()
+            data['form_is_valid']=True
+        data['slug']=client.slug
+        client=models.client.objects.get(slug=slug)
+    
+        
+        engagements=models.engagement.objects.filter(client=client)
+        context_object={"client":client,"form":form,"engagements":engagements}
+        data['html_form']=render_to_string('edit_client_primary_user.html',context_object,request=request)
+        
+        return JsonResponse(data)
+
         
 
 

@@ -6,7 +6,16 @@
         <h2 id="title">{{client.name}}</h2>
         <div style="padding-bottom:10px;">
             <button class="btn btn-primary show-engagement_form" href="#" data-url="{% url 'create_engagement' client.slug %}">Add Engagement</a></button>
-            <button class="btn btn-primary show-edit_client_form" href="#" data-url="{% url 'edit_client' client.slug %}">Edit Client</a></button>           
+            <div class="btn-group dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+                    Edit Client
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                    <li role="presentation"><a class="dropdown-item show-edit_client_form" data-url="{% url 'edit_client' client.slug %}" role="menuitem" tabindex="-1">Edit Client Details</a></li>
+                    <li role="presentation"><a class="dropdown-item show-edit_primary_client_user_form" data-url="{% url 'edit_primary_client_user' client.slug %}" role="menuitem" tabindex="-1">Change Primary User</a></li>
+                </ul>   
+            </div>       
             <button class="btn btn-danger" data-toggle="modal" data-target="#fm-modal-grid">Delete Client</button>
         </div>
             <table class="table table-striped table-bordered table-sm" cellspacing="0" width="100%" id="engagement_table" stye="top-padding:10">
@@ -29,6 +38,12 @@
 </div>
 
 <div class="modal fade" id="modal-edit_client">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-edit_primary_client_user">
     <div class="modal-dialog">
         <div class="modal-content"></div>
     </div>

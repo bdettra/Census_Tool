@@ -97,6 +97,27 @@ $(document).ready(function () {
         });
     };
 
+    var ShowEditPrimaryClientUserForm = function () {
+        console.log("ShowForm Activated");
+        var btn = $(this);
+
+        $.ajax({
+            url: btn.attr("data-url"),
+
+            type: 'get',
+
+            dataType: 'json',
+
+            beforeSend: function () {
+                $('#modal-edit_primary_client_user').modal('show');
+            },
+
+            success: function (data) {
+                $('#modal-edit_primary_client_user .modal-content').html(data.html_form);
+            }
+        });
+    };
+
     //Defining the Show Eligiblity Form
     var ShowEligiblityForm = function (){
         console.log("Eligiblity Form Activated");
@@ -284,6 +305,57 @@ $(document).ready(function () {
                 }
                 else {
                     $('#modal-selections .modal-content').html(data.html_form)
+                }
+            }
+
+        })
+
+        return false;
+    };
+
+    var ShowEditSelectionsForm = function (){
+
+        var btn = $(this);
+
+        $.ajax({
+            
+            url:btn.attr("data-url"),
+
+            type:'get',
+
+            dataType:"json",
+
+            beforeSend: function (){
+                $("#modal-edit_selections").modal("show");
+            },
+
+            success: function (data){
+                $("#modal-edit_selections .modal-content").html(data.html_form);
+            }
+        })
+    };
+
+    var SaveEditSelectionsForm = function() {
+        var form = $(this);
+        $.ajax({
+
+            url: form.attr('data-url'),
+
+            data: form.serialize(),
+
+            type: form.attr('method'),
+
+            dataType: 'json',
+
+            success: function (data) {
+                if (data.form_is_valid) {
+                    $('#census_table').DataTable().ajax.reload();
+
+                    $('#modal-edit_selections').modal('hide');
+                
+                }
+                else {
+                    $('#modal-edit_selections .modal-content').html(data.html_form)
                 }
             }
 
@@ -491,6 +563,38 @@ $(document).ready(function () {
         return false;
     };
 
+    var SaveEditPrimaryUserForm = function () {
+
+        var form = $(this);
+
+        $.ajax({
+            url: form.attr('data-url'),
+
+            data: form.serialize(),
+
+            type: form.attr('method'),
+
+            dataType: 'json',
+
+            success: function (data) {
+                if (data.form_is_valid) {
+
+
+                    $('#modal-edit_primary_client_user').modal('hide');
+                    
+                    window.location.href = '/dashboard/client_page/' +data.slug
+                
+                }
+                else{
+                    $('#modal-edit_primary_client_user .modal-content').html(data.html_form)
+                }
+            }
+
+        })
+
+        return false;
+    };
+
     var ViewErrors = function (){
         var btn = $(this);
         console.log("Working");
@@ -559,8 +663,11 @@ $(document).ready(function () {
     $(".show-edit_client_form").click(ShowEditClientForm);
     
     $('#modal-edit_client').on("submit",".edit-client_form",SaveEditForm);
-    
 
+
+    //Edit Primary Client User
+    $(".show-edit_primary_client_user_form").click(ShowEditPrimaryClientUserForm);
+    $('#modal-edit_primary_client_user').on("submit",".edit-primary_client_user_form",SaveEditPrimaryUserForm);
     // Edit Eligiblity
     $(".show-form").click(ShowEligiblityForm);
     $("#modal-eligibility_rules").on("submit",".eligibility-form",SaveEligibilityForm);
@@ -576,6 +683,11 @@ $(document).ready(function () {
 
     $(".show-selections_form").click(ShowMakeSelectionsForm);
     $("#modal-selections").on("submit",".selections-form",SaveSelections);
+
+    //Edit Selections
+
+    $(".show-edit_selections_form").click(ShowEditSelectionsForm);
+    $("#modal-edit_selections").on("submit",".edit_selections_form",SaveEditSelectionsForm);
 
 
     //Show Census Statistics

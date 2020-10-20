@@ -147,6 +147,25 @@ class EditClientForm(forms.ModelForm):
         instance.slug=slug
         instance.users.set(users)
         instance.save()
+    
+class EditClientUserForm(forms.ModelForm):
+    def __init__(self,client,*args,**kwargs):
+        self.client=client
+        super().__init__(*args,**kwargs)
+
+    class Meta:
+        model=models.client
+        fields=('primary_user',)
+
+    def save(self):
+        primary_user = self.cleaned_data.get("primary_user")
+
+        instance=self.client
+
+        instance.primary_user = primary_user
+
+        instance.save()
+        
 
 
 
@@ -159,9 +178,10 @@ class NewEngagementForm(BSModalForm):
 
     class Meta:
         model=models.engagement
-        fields=('name','date')
+        fields=('name','date','soc_1_reliance')
         widgets={'name':forms.fields.TextInput(attrs={"placeholder":"Engagement Name",'class':'form-control'}),
-        'date':forms.fields.DateInput(attrs={"placeholder":"Engagement Date",'class':'form-control','id':'datepicker'})}
+        'date':forms.fields.DateInput(attrs={"placeholder":"Engagement Date",'class':'form-control','id':'datepicker'}),
+        "soc_1_reliance":forms.CheckboxInput}
 
         
     def clean(self):
@@ -302,6 +322,20 @@ class KeyEmployee(forms.ModelForm):
         if key_employee is None:
             key_employee=False
 
+        return self.cleaned_data
+
+class EditSelection(forms.ModelForm):
+    class Meta:
+        model=models.participant
+        fields=['selection']
+        widgets={'selection':forms.CheckboxInput}
+
+    def clean(self):
+        selection = self.cleaned_data.get("selection")
+
+        if selection is None:
+            selection = False
+        
         return self.cleaned_data
 
 class ErrorForm(forms.ModelForm):

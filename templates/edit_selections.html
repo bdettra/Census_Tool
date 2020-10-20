@@ -1,0 +1,79 @@
+{% block content %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+{% load static %}
+
+ 
+<form method="post" data-url="{% url 'edit_selections' client.slug engagement.slug %}" class="edit_selections_form">
+
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Edit Selections</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        <div class="container col">
+            <div class="row">
+                <div class="col-md-6">
+                    <h2>Participating</h2>
+                    <ul class="list-group" style="max-height:325px; margin-bottom: 10px; overflow:scroll;">
+                        {% for form in formset.forms %}
+                            {% if form.instance.participating == True %}
+                            <li class="list-group-item">
+                                {{form.instance.first_name}} {{ form.instance.last_name}} 
+                                {% for field in form %}
+                                    {% if field.errors %}
+                                        {% render_field field class="form-control is-invalid" %}
+                                    {% else %}
+                                        {% render_field field %}
+                                    {% endif %}
+                                {% endfor %}
+                            </li>
+                            {% endif %}   
+                        {% endfor %}        
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h2>Non-Participating</h2>
+                    <ul class="list-group" style="max-height:325px; margin-bottom: 10px; overflow:scroll;">
+                        {% for form in formset.forms %}
+                            {% if form.instance.participating == False %}
+                            <li class="list-group-item">
+                                {{form.instance.first_name}} {{ form.instance.last_name}} 
+                                {% for field in form %}
+                                    {% if field.errors %}
+                                        {% render_field field class="form-control is-invalid" %}
+                                    {% else %}
+                                        {% render_field field %}
+                                    {% endif %}
+                                {% endfor %} 
+                            </li>    
+                            {% endif %}                                                   
+                    {% endfor %}
+                    <ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+        <button type="submit" class="btn btn-primary keye">Submit</button>
+
+    </div>
+
+
+</form>
+
+{% endblock content %}
+
+<div class="ajaxProgress">
+    <h3>Loading</h3>
+    <img src="{% static 'main/images/ajax-loader.gif' %}" alt="loading"/>
+</div>
