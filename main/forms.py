@@ -113,9 +113,9 @@ class EditClientForm(forms.ModelForm):
 
     class Meta:
         model=models.client
-        fields=('name','number','users')
+        fields=('name','number','users',)
         widgets={'name':forms.fields.TextInput(attrs={'class':'form-control'}),
-        'number':forms.fields.TextInput(attrs={'class':'form-control'})}
+        'number':forms.fields.TextInput(attrs={'class':'form-control'}),}
 
 
     def clean(self):
@@ -165,10 +165,6 @@ class EditClientUserForm(forms.ModelForm):
         instance.primary_user = primary_user
 
         instance.save()
-        
-
-
-
 
 class NewEngagementForm(BSModalForm):
 
@@ -199,6 +195,49 @@ class NewEngagementForm(BSModalForm):
         
     def get_user(self):
         return self.user
+
+class EditEngagementForm(forms.ModelForm):
+
+    def __init__(self,engagement,*args,**kwargs):
+        self.engagement=engagement
+        super().__init__(*args,**kwargs)
+
+    class Meta:
+        model=models.engagement
+        fields=('name','date','soc_1_reliance',)
+        widgets={'name':forms.fields.TextInput(attrs={'placeholder':'Engagement Name','class':'form-control'}),
+        'date':forms.fields.DateInput(attrs={"placeholder":"Engagement Date",'class':'form-control','id':'datepicker'}),
+        'soc_1_reliance':forms.CheckboxInput}
+
+
+    def clean(self):
+        
+        name=self.cleaned_data.get("name")
+        date=self.cleaned_data.get("date")
+        engagement = self.engagement
+
+        client = engagement.client
+
+        #Checking to make sure that the new client name does not already exist in the database
+        if models.engagement.objects.filter(name=name,client=client).exists() and self.engagement.name != name:
+            raise forms.ValidationError("This engagement name already exists")
+
+        return self.cleaned_data
+
+    def save(self):
+        #Getting the new name, number and users from the form.
+        name=self.cleaned_data.get("name")
+        date=self.cleaned_data.get("date")
+        soc_1_reliance=self.cleaned_data.get("soc_1_reliance")
+        slug=slugify(name)
+
+        #Updating the existing client in the database.
+        instance=self.engagement
+        instance.name=name
+        instance.date=date
+        instance.slug=slug
+        instance.soc_1_reliance= soc_1_reliance
+        instance.save()
 
 class EligibilityForm(forms.ModelForm):
 

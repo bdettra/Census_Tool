@@ -248,7 +248,84 @@ class CreateEngagement(TemplateView):
         
         data['html_form']=render_to_string('new_engagement.html',context,request=request)
 
-        return JsonResponse(data)    
+        return JsonResponse(data) 
+
+class EditEngagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+
+    login_url="/accounts/login/"
+
+    def test_func(self):
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+        primary_user = client.primary_user
+
+        print(primary_user.email)
+        return self.request.user == primary_user
+
+
+    template_name="edit_engagement.html"
+
+    def get(self,request,slug, Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement = models.engagement.objects.get(slug=Eslug)
+        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
+        participants = models.participant.objects.filter(engagement=engagement)
+        form=forms.EditEngagementForm(instance=engagement,engagement=engagement)
+
+        context_object={"client":client,"engagement":engagement,"form":form,"participants":participants}
+        data['html_form']=render_to_string('edit_engagement.html',context_object,request=request)
+        
+        return JsonResponse(data)
+
+
+    def post(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement = models.engagement.objects.get(slug=Eslug)
+        form=forms.EditEngagementForm(engagement,request.POST)
+        data['form_is_valid']=False
+        if form.is_valid():
+            form.save()
+            engagement=models.engagement.objects.get(slug=slugify(form.cleaned_data.get("name")))
+            data['form_is_valid']=True
+        data['engagement_slug']=engagement.slug
+        data['client_slug']=client.slug
+        eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        participants = models.participant.objects.filter(engagement=engagement)
+        
+        context_object={"client":client,"form":form,"engagement":engagement,"participants":participants}
+        data['html_form']=render_to_string('edit_engagement.html',context_object,request=request)
+        print("WORKING")
+        return JsonResponse(data)  
+
+
+class ViewEngagementProfile(LoginRequiredMixin, TemplateView):
+
+    login_url="/accounts/login/"
+
+    def test_func(self):
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+        primary_user = client.primary_user
+
+        print(primary_user.email)
+        return self.request.user == primary_user
+
+
+    template_name="view_engagement_profile.html"
+
+    def get(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+        client = models.client.objects.get(slug=slug)
+        engagement = models.engagement.objects.get(client=client,slug=Eslug)
+
+
+        context_object={"client":client,"engagement":engagement,}
+        data['html_form']=render_to_string('view_engagement_profile.html',context_object,request=request)
+        
+        return JsonResponse(data)
+    
 
 
 

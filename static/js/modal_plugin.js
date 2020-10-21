@@ -97,6 +97,27 @@ $(document).ready(function () {
         });
     };
 
+    var ShowEditEngagementForm = function () {
+        console.log("ShowForm Activated");
+        var btn = $(this);
+
+        $.ajax({
+            url: btn.attr("data-url"),
+
+            type: 'get',
+
+            dataType: 'json',
+
+            beforeSend: function () {
+                $('#modal-edit_engagement').modal('show');
+            },
+
+            success: function (data) {
+                $('#modal-edit_engagement .modal-content').html(data.html_form);
+            }
+        });
+    };
+
     var ShowEditPrimaryClientUserForm = function () {
         console.log("ShowForm Activated");
         var btn = $(this);
@@ -387,6 +408,28 @@ $(document).ready(function () {
         })
     };
 
+    var EngagementProfile = function (){
+        console.log("Engagement Profile");
+        var btn = $(this);
+
+        $.ajax({
+            
+            url:btn.attr("data-url"),
+
+            type:'get',
+
+            dataType:"json",
+
+            beforeSend: function (){
+                $("#modal-view_engagement_profile").modal("show");
+            },
+
+            success: function (data){
+                $("#modal-view_engagement_profile .modal-content").html(data.html_form);
+            }
+        })
+    };
+
     //Defining the Census Statistics variable
     var ShowPreviousSeletions = function (){
         console.log("PY Selections");
@@ -563,6 +606,39 @@ $(document).ready(function () {
         return false;
     };
 
+    //Defining the Save Edit Form Variable
+    var SaveEditEngagementForm = function () {
+
+    var form = $(this);
+    console.log("Working")
+    $.ajax({
+        url: form.attr('data-url'),
+
+        data: form.serialize(),
+
+        type: form.attr('method'),
+
+        dataType: 'json',
+
+        success: function (data) {
+            if (data.form_is_valid) {
+
+
+                $('#modal-edit_engagement').modal('hide');
+                
+                window.location.href = '/dashboard/client_page/' +data.client_slug + '/engagement/' + data.engagement.slug
+                console.log("Worked")
+            }
+            else{
+                $('#modal-edit_engagement .modal-content').html(data.html_form)
+            }
+        }
+
+    })
+
+    return false;
+};
+
     var SaveEditPrimaryUserForm = function () {
 
         var form = $(this);
@@ -677,6 +753,11 @@ $(document).ready(function () {
     $(".show-engagement_form").click(ShowEngagementForm);
     $("#modal-new_engagement").on("submit", ".create-form", SaveEngagementForm);
 
+
+    //Edit Engagement
+    $(".show-edit_engagement_form").click(ShowEditEngagementForm);
+    $('#modal-edit_engagement').on("submit",".edit-engagement_form",SaveEditEngagementForm);
+
     //Create Key Employees
     $(".show-key_employee-form").click(KeyEmployeeForm);
     $("#modal-key_employee").on("submit",".key_employee-form",SaveKeyEmployeeForm);
@@ -692,6 +773,9 @@ $(document).ready(function () {
 
     //Show Census Statistics
     $(".show-census_statistics-form").click(CensusStatistics);
+
+    //Show Engagement PRofile
+    $(".show-view_engagement_profile").click(EngagementProfile);    
 
     //Show PY Selections
     $(".show-py_selections").click(ShowPreviousSeletions)

@@ -19,6 +19,16 @@
     <div style="padding-top: 20px; padding-bottom:10px;" class="row justify-content-center">
         <div class="btn-group dropdown">
             <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
+                Engagement Profile
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
+                <li role="presentation"><a class="dropdown-item show-edit_engagement_form" data-url="{% url 'edit_engagement' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Edit Profile</a></li>
+                <li role="presentation"><a class="dropdown-item show-view_engagement_profile" data-url="{% url 'view_profile' client.slug engagement.slug %}" role="menuitem" tabindex="-1">View Profile</a></li>
+            </ul>
+        </div>
+        <div class="btn-group dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-expanded="true">
                 Eligibility
                 <span class="caret"></span>
             </button>
@@ -134,6 +144,18 @@
 </div>
 
 <div class="modal fade" id="modal-view_errors">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-edit_engagement">
+    <div class="modal-dialog">
+        <div class="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal-view_engagement_profile">
     <div class="modal-dialog">
         <div class="modal-content"></div>
     </div>

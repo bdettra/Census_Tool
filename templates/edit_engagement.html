@@ -1,0 +1,61 @@
+{% block content %}
+{% load crispy_forms_tags %}
+
+<form method="post" data-url="{% url 'edit_engagement' client.slug engagement.slug %}" class="edit-engagement_form">
+
+    {% csrf_token %}
+
+        <div class="modal-header">
+            <h5 class="modal-title">Edit Engagement Profile</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="client_name" class="col-md-2 control-label">Engagement Name</label>
+                <div class="col-md-10">
+                    {{form.name}}
+                </div>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="client_number" class="col-md-2 control-label">Engagement Date</label>
+                <div class="col-md-10">
+                    {{form.date}}
+                </div>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="client_name" class="col-md-2 control-label">Soc 1 Reliance</label>
+                <div class="col-md-10">
+                    {{form.soc_1_reliance}}
+                </div>
+            </div>
+        </div>
+        {% if form.errors %}
+        {% for field in form %}
+            {% for error in field.errors %}
+                <div class="alert alert-danger">
+                    <strong>{{ error|escape }}</strong>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <p class="validation-summary-errors">{{error | escape}}</p>
+        {% endfor %}
+    {% endif %}
+        
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+
+        </div>
+
+</form>
+
+{% endblock content %}
