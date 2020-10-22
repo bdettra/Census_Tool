@@ -145,17 +145,15 @@ class ClientDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     login_url='/accounts/login/'
 
     model=models.client
+    slug_url_kwarg="slug"
     success_url=reverse_lazy('client_dashboard')
     template_name="client_dashboard.html"
+    raise_exception = True
 
-
+    
     def test_func(self):
-        client_slug = self.kwargs.pop("slug")
-        client = models.client.objects.get(slug=client_slug)
-        primary_user = client.primary_user
-
-        print(primary_user.email)
-        return self.request.user == primary_user
+        self.object=self.get_object()
+        return self.request.user ==self.object.primary_user
 
 class EngagementDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     '''Deletes an engagement from the database'''
@@ -164,14 +162,22 @@ class EngagementDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     template_name="client_page.html"
     login_url="/accounts/login/"
 
-    def test_func(self):
-        client_slug=self.kwargs.pop("slug")
-        engagement_slug=self.kwargs.pop("Eslug")
+    def get_object(self,queryset=None):
+        client_slug=self.kwargs["slug"]
+        engagement_slug=self.kwargs["Eslug"]
 
         client = models.client.objects.get(slug=client_slug)
-        engagement= models.engagement.objects.get(slug=engagement_slug)
+        obj = models.engagement.objects.get(client=client, slug=engagement_slug)
 
-        return self.request.user == engagement.primary_user
+        return obj
+
+
+    def test_func(self):
+        
+        self.object=self.get_object()
+        print(self.object)
+        
+        return self.request.user == self.object.primary_user
 
     def get_success_url(self):
         client=self.object.client
@@ -268,7 +274,7 @@ class EditEngagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def get(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
         client=models.client.objects.get(slug=slug)
-        engagement = models.engagement.objects.get(slug=Eslug)
+        engagement = models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
         participants = models.participant.objects.filter(engagement=engagement)
         form=forms.EditEngagementForm(instance=engagement,engagement=engagement)
@@ -1489,7 +1495,7 @@ class ParticipantAPI(generics.ListAPIView):
 
         client=models.client.objects.get(slug=self.kwargs['slug'])
         if client in user.client_set.all():
-            engagement=models.engagement.objects.get(slug=self.kwargs['Eslug'])
+            engagement=models.engagement.objects.get(slug=self.kwargs['Eslug'],client=client)
             participants=models.participant.objects.filter(engagement=engagement)
         
             return participants
