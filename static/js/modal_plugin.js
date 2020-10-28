@@ -226,6 +226,14 @@ $(document).ready(function () {
     $(".show-edit_engagement_form").click('#modal-edit_engagement',ShowModalForm);
     $('#modal-edit_engagement').on("submit",".edit-engagement_form",SaveEditEngagementForm);
 
+    //Add Client Contact
+    $(".show-add_contact_form").click('#modal-add_contact_form',ShowModalForm);
+    $("#modal-add_contact_form").on("submit", ".add_contact_form",['#census_table','#modal-add_contact_form'], SaveModalFormTable);
+
+    //Delete Client Contact
+    $(".show-delete_contact_form").click('#modal-delete_contact',ShowModalForm);
+    $("#modal-delete_contact").on("submit",".delete_contacts-form",['#census_table', '#modal-delete_contact'],SaveModalFormTable);
+    
     // Edit Eligiblity
     $(".show-form").click('#modal-eligibility_rules',ShowModalForm);
     $("#modal-eligibility_rules").on("submit",".eligibility-form",SaveEligibilityForm);

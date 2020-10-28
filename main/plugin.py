@@ -6,12 +6,12 @@ from django_random_queryset import RandomManager
 import re
 
 def location_dict(columns):
-    column_dict={"First Name":["First Name", "First"],"Last Name":["Last Name", "Last"],"SSN":["Social","SSN"],
-             "DOB":["Date of B","DOB"],"DOH":["Date of H", "DOH", "Hire Date","hire date"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
+    column_dict={"First Name":["First Name", "First","FNAME","fname"],"Last Name":["Last Name", "Last","LNAME","lname"],"SSN":["Social","SSN"],
+             "DOB":["Date of B","DOB","Birthdate","Birth Date"],"DOH":["Date of H", "DOH", "Hire Date","hire date","Original Hire Date"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
              "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked"],"Gross Wages":["Gross Wa", "Gross Wages", "Gross Comp", "Gross Compensation"],
              "Eligible Wages":["Eligible Wages","eligible wages","Eligible wages","eligible Wages","Eligible Wage","eligible wage"],
-            "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax"],
-             "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con"],
+            "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax","Deferrals","deferrals"],
+             "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con","Match","match"],
             "EE Roth":["Employee Roth","employee roth","Employee roth","EE Roth"],
             "ER Roth":["Employer Roth","employer roth","Employer roth","ER Roth"],
             "EE Catch-up":["Employee Catch-Up","employee catch-up","EE Catch-up","EE Catch-Up","ee catch-up","EE catch-up"],

@@ -325,9 +325,10 @@ class ViewEngagementProfile(LoginRequiredMixin, TemplateView):
         data=dict()
         client = models.client.objects.get(slug=slug)
         engagement = models.engagement.objects.get(client=client,slug=Eslug)
+        client_contacts = models.client_contact.objects.filter(engagement=engagement)
 
 
-        context_object={"client":client,"engagement":engagement,}
+        context_object={"client":client,"engagement":engagement,"client_contacts":client_contacts}
         data['html_form']=render_to_string('view_engagement_profile.html',context_object,request=request)
         
         return JsonResponse(data)
@@ -904,15 +905,22 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     
         location_dict=plugin.location_dict(columns)
         found_columns=location_dict.keys()
+
+        #These are the defined census columns that will show up in the application
         application_columns = ["First Name","Last Name","SSN","DOB","DOH","DOT","DORH",
                                 "Excluded","Hours Worked","Gross Wages","Eligible Wages",
                                 "EE pre-tax","ER pre-tax","EE Roth","ER Roth","EE Catch-up","ER Catch-up"]
+        
+        #If there is a column in the application census that is not in the excel file we are creating a column in dolumn dict that is equal to none.
         for i in application_columns:
             if i in found_columns:
                 pass
             else:
                 location_dict[i]=None
 
+
+        #Going through columns in the location dict that are required in order to process the census
+        #if any of these columns were not ofund in the excel file the census will not process.
         if location_dict["First Name"]==None:
             messages.error(self.request,"The census is missing a First Name column. Stopped processing")
             return render(request,"engagement_page.html",context=context)
@@ -935,8 +943,14 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             messages.error(self.request,"The census is missing a DORH column. Stopped processing")
             return render(request,"engagement_page.html",context=context)
         
-
+        #Iterating through each row and data point in the census.
         for i,x in data.iterrows():
+
+            '''If this row's SSN is missing return an error and stop processing the census.
+               If it is found extract the SSN, make sure that it is a string that is in the SSN format in 
+               order to make sure it isn't another string data point. If it matches the SSN pattern
+               then continue processing'''
+
             if pd.isnull(data.iloc[i,location_dict['SSN']])==False:
                 ssn = str(data.iloc[i,location_dict['SSN']])
                 full_ssn_pattern=re.compile('[0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]')
@@ -950,6 +964,10 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 messages.error(self.request,"One of the employees is missing a SSN value. Census stopped processing at that employee.")
                 return render(request,"engagement_page.html",context=context)
 
+
+            '''If this row's First Name data point is null or missing stop processing the census and return an error.
+            If it isn't null continue processing the census.'''
+            
             if pd.isnull(data.iloc[i,location_dict['First Name']])==False:
                 participant.first_name=data.iloc[i,location_dict['First Name']]
                 participant.save()
@@ -1228,6 +1246,107 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
         return HttpResponseRedirect(reverse('engagement_page',args=(slug, Eslug)))
 
+class AddClientContact(LoginRequiredMixin, TemplateView):
+
+    template_name="add_client_contact.html"
+
+    login_url = "/accounts/login"
+
+    '''
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test  
+    '''
+
+    def get(self,request,slug, Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement = models.engagement.objects.get(slug=Eslug,client=client)
+        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
+        participants = models.participant.objects.filter(engagement=engagement)
+        form=forms.NewClientContact(engagement=engagement)
+
+        context_object={"client":client,"engagement":engagement,"form":form,"participants":participants,"eligiblity_rules":eligibility_rules}
+        data['html_form']=render_to_string('add_client_contact.html',context_object,request=request)
+        
+        print("Worked")
+        return JsonResponse(data)
+
+
+    def post(self,request,slug,Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement = models.engagement.objects.get(slug=Eslug)
+        form=forms.NewClientContact(engagement,request.POST)
+        data['form_is_valid']=False
+        if form.is_valid():
+            form.save()
+            data['form_is_valid']=True
+        data['engagement_slug']=engagement.slug
+        data['client_slug']=client.slug
+        eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        participants = models.participant.objects.filter(engagement=engagement)
+        
+        print(data["form_is_valid"])
+        context_object={"client":client,"form":form,"engagement":engagement,"participants":participants}
+        data['html_form']=render_to_string('add_client_contact.html',context_object,request=request)
+        return JsonResponse(data)  
+
+class DeleteClientContact(LoginRequiredMixin,TemplateView):
+
+    template_name="delete_client_contact.html"
+    login_url="/accounts/login/"
+    
+    def get(self,request,slug,Eslug,*args,**kwargs):
+        print(slug)
+        data=dict()
+        client = models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        client_contacts = models.client_contact.objects.filter(engagement=engagement)
+
+        FormSet=modelformset_factory(models.client_contact,forms.ContactDeleteForm,extra=0,can_delete=True)
+        formset = FormSet(queryset=client_contacts)
+
+        context_object = {'formset':formset,'client':client,'engagement':engagement,'client_contacts':client_contacts}
+
+        data['html_form'] = render_to_string('delete_client_contact.html',context_object,request=request)
+
+        return JsonResponse(data)
+
+    def post(self,request,slug, Eslug, *args, **kwargs):
+
+        data=dict()
+        FormSet = modelformset_factory(models.client_contact, forms.ContactDeleteForm,extra=0,can_delete=True)
+        formset=FormSet(request.POST,request.FILES)
+        instance=formset.save()
+        
+
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        participants=models.participant.objects.filter(engagement=engagement)
+      
+        eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        
+
+        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants,}
+        
+
+        #data['engagements']=render_to_string('census_list.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],'errors':context['errors']},request=request)
+        data['form_is_valid']=True
+        data['html_form']=render_to_string('delete_client_contact.html',context,request=request)
+
+        return JsonResponse(data) 
+
+
 @login_required  
 def export_selections(request,slug,Eslug):
     print('Working')
@@ -1358,7 +1477,7 @@ class ViewErrors(LoginRequiredMixin,UserPassesTestMixin, TemplateView):
         
         return test
 
-    def get(self,request,slug,Eslug,*args,**kwargs):
+    def get(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
 
         client=models.client.objects.get(slug=slug)

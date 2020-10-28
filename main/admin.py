@@ -29,6 +29,10 @@ class ParticipantAdmin(admin.ModelAdmin):
     "effective_deferral_percentage","selection","key_employee","eligible",
     "participating","engagement","id",)
 
+class ClientContactAdmin(admin.ModelAdmin):
+    models=models.client_contact
+    list_display=("first_name","last_name","position","email","engagement")
+
 class ErrorAdmin(admin.ModelAdmin):
     model=models.error
     list_display=("error_message",'participant')
@@ -114,4 +118,5 @@ main_admin.register(models.client,ClientAdmin)
 main_admin.register(models.engagement,EngagementAdmin)
 main_admin.register(models.eligibility_rules,EligibilityRules)
 main_admin.register(models.participant,ParticipantAdmin)
+main_admin.register(models.client_contact,ClientContactAdmin)
 main_admin.register(models.error,ErrorAdmin)
