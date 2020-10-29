@@ -201,6 +201,7 @@ class CreateEngagement(LoginRequiredMixin,TemplateView):
         client_object=models.client.objects.get(slug=slug)
         new_engagement_form=forms.NewEngagementForm(client=client_object)
         context_object={'form':new_engagement_form, "client":client_object}
+        print(new_engagement_form)
         data['html_form']=render_to_string('new_engagement.html',context_object,request=request)
         return JsonResponse(data)
 
@@ -582,6 +583,7 @@ class CensusStatistics(UserPassesTestMixin, TemplateView):
         ineligible=models.participant.objects.filter(engagement=engagement,eligible=False).count()
         average_gross_wages=participants.aggregate(Avg("gross_wages"))
         employees_terminated=participants.exclude(DOT=None).count()
+        employees_hired=participants.filter(DOH__range=[(engagement.date-relativedelta(years=1)),engagement.date]).count()
         key_employees=participants.filter(key_employee=True).count()
         standard_dev_wages=participants.aggregate(StdDev("gross_wages"))
         top_earners=participants.order_by('-gross_wages')
@@ -592,7 +594,7 @@ class CensusStatistics(UserPassesTestMixin, TemplateView):
         number_of_non_cont_selections=participants.filter(selection=True,contributing=False).count()
         number_of_errors=models.error.objects.filter(participant__id__in=participants).count()
 
-        context_object={"number_of_errors":number_of_errors,"number_of_non_cont_selections":number_of_non_cont_selections,"number_of_cont_selections":number_of_cont_selections,"number_of_selections":number_selections,"lowest_earner":lowest_earner,"top_earner":top_earner,"standard_dev_wages":standard_dev_wages,"key_employees":key_employees,"employees_terminated":employees_terminated,"average_gross_wages":average_gross_wages,"ineligible":ineligible,"eligible":eligible,"non_contributing_employees":non_contributing_employees,"contributing_employees":contributing_employees,"number_of_employees":number_of_employees,"participants":participants, "client":client, "engagement":engagement,"eligibility_rules":eligibility_rules,}
+        context_object={"employees_hired":employees_hired,"number_of_errors":number_of_errors,"number_of_non_cont_selections":number_of_non_cont_selections,"number_of_cont_selections":number_of_cont_selections,"number_of_selections":number_selections,"lowest_earner":lowest_earner,"top_earner":top_earner,"standard_dev_wages":standard_dev_wages,"key_employees":key_employees,"employees_terminated":employees_terminated,"average_gross_wages":average_gross_wages,"ineligible":ineligible,"eligible":eligible,"non_contributing_employees":non_contributing_employees,"contributing_employees":contributing_employees,"number_of_employees":number_of_employees,"participants":participants, "client":client, "engagement":engagement,"eligibility_rules":eligibility_rules,}
         data['html_form']=render_to_string('census_statistics.html',context_object,request=request)
         return JsonResponse(data)
 
@@ -633,7 +635,8 @@ class MakeSelections(UserPassesTestMixin, TemplateView):
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
 
-        x = plugin.generate_selections(engagement)
+        x = plugin.generate_selections_version_2(engagement)
+        print(len(x))
        
 
         #print(plugin.generate_selections_version_2(engagement,client))
@@ -891,7 +894,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
         #Reading in the excel file that is uploaded as a pandas table
         try:
-            data=pd.read_excel(request.FILES['filename'])
+            data=pd.read_excel(request.FILES['filename'], dtype={'SSN':str})
         except:
             messages.error(self.request,"The file that imported is not in excel format")
             return render(request,"engagement_page.html",context=context)
@@ -915,6 +918,8 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 pass
             else:
                 location_dict[i]=None
+
+      
 
 
         #Going through columns in the location dict that are required in order to process the census
@@ -985,9 +990,10 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
             if pd.isnull(data.iloc[i,location_dict['DOB']])==False:
                 try:
-                    data.iloc[i,location_dict['DOB']]=pd.to_datetime(data.iloc[i,location_dict['DOB']],format="%m/%d/%y")
-                except:
-                    messages.error(self.request,"There is an invalid data point in the DOB column at row " + str(i+1) +".")
+                    data.iloc[i,location_dict['DOB']]=pd.to_datetime(data.iloc[i,location_dict['DOB']],)
+                    print(data.iloc[i,location_dict['DOB']])
+                except  Exception as e:
+                    messages.error(self.request,"There is an invalid data point in the DOB column at row " + str(i+1) +"." + str(e))
                     return render(request,"engagement_page.html",context=context)
 
                 participant.DOB=data.iloc[i,location_dict['DOB']].date()
@@ -999,9 +1005,9 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
             if pd.isnull(data.iloc[i,location_dict['DOH']])==False:
                 try:
-                    data.iloc[i,location_dict['DOH']]=pd.to_datetime(data.iloc[i,location_dict['DOH']],format="%m/%d/%y")
-                except:
-                    messages.error(self.request,"There is an invalid data point in the DOH column at row " + str(i+1) +".")
+                    data.iloc[i,location_dict['DOH']]=pd.to_datetime(data.iloc[i,location_dict['DOH']],)
+                except Exception as e:
+                    messages.error(self.request,"There is an invalid data point in the DOH column at row " + str(i+1) +"." + str(e))
                     return render(request,"engagement_page.html",context=context)
                 participant.DOH=data.iloc[i,location_dict['DOH']].date()
             else:
@@ -1011,20 +1017,20 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
             if pd.isnull(data.iloc[i,location_dict['DOT']])==False:
                 try:
-                    data.iloc[i,location_dict['DOT']]=pd.to_datetime(data.iloc[i,location_dict['DOT']],format="%m/%d/%y")
+                    data.iloc[i,location_dict['DOT']]=pd.to_datetime(data.iloc[i,location_dict['DOT']],)
                 except:
                     messages.error(self.request,"There is an invalid data point in the DOT column at row " + str(i+1) +".")
                     return render(request,"engagement_page.html",context=context)
 
                 participant.DOT=data.iloc[i,location_dict['DOT']].date()
                 participant.save()
-                if participant.DOT < (engagement.date - relativedelta(years=1)):
+                if participant.DOT < (engagement.date - relativedelta(years=1)) and participant.DORH==None:
                     error=models.error.objects.create(participant=participant,error_message="DOT is before engagement year")
                     #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
 
             if pd.isnull(data.iloc[i,location_dict['DORH']])==False:
                 try:
-                    data.iloc[i,location_dict['DORH']]=pd.to_datetime(data.iloc[i,location_dict['DORH']],format="%m/%d/%y")
+                    data.iloc[i,location_dict['DORH']]=pd.to_datetime(data.iloc[i,location_dict['DORH']],)
                 except:
                     messages.error(self.request,"There is an invalid data point in the DOT column at row " + str(i+1) +".")
                     return render(request,"engagement_page.html",context=context)

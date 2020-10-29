@@ -166,7 +166,7 @@ class EditClientUserForm(forms.ModelForm):
 
         instance.save()
 
-class NewEngagementForm(BSModalForm):
+class NewEngagementForm(forms.ModelForm):
 
     def __init__(self,client,*args,**kwargs):
         self.client=client

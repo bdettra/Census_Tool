@@ -8,12 +8,12 @@ import re
 def location_dict(columns):
     column_dict={"First Name":["First Name", "First","FNAME","fname"],"Last Name":["Last Name", "Last","LNAME","lname"],"SSN":["Social","SSN"],
              "DOB":["Date of B","DOB","Birthdate","Birth Date"],"DOH":["Date of H", "DOH", "Hire Date","hire date","Original Hire Date"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
-             "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked"],"Gross Wages":["Gross Wa", "Gross Wages", "Gross Comp", "Gross Compensation"],
+             "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked","Hours"],"Gross Wages":["Gross Wa", "Gross Wages", "Gross Comp","GROSS WAGES" "Gross Compensation"],
              "Eligible Wages":["Eligible Wages","eligible wages","Eligible wages","eligible Wages","Eligible Wage","eligible wage"],
-            "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax","Deferrals","deferrals"],
-             "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con","Match","match"],
-            "EE Roth":["Employee Roth","employee roth","Employee roth","EE Roth"],
-            "ER Roth":["Employer Roth","employer roth","Employer roth","ER Roth"],
+            "EE pre-tax":["Employee Pre-Tax","EE Pre Tax","EE pre tax","employee pre-tax con","EE Pre-Tax","Deferrals","DEFERRALS","deferrals", "EE Pre"],
+             "ER pre-tax":["Employer Pre-Tax","ER Pre-Tax","ER pre tax","employer pre-tax con","Match","match","MATCH","ER Pre"],
+            "EE Roth":["Employee Roth","employee roth","Employee roth","EE Roth","EE Post","ROTH"],
+            "ER Roth":["Employer Roth","employer roth","Employer roth","ER Roth","ER Post"],
             "EE Catch-up":["Employee Catch-Up","employee catch-up","EE Catch-up","EE Catch-Up","ee catch-up","EE catch-up"],
             "ER Catch-up":["Employer Catch-Up","employer catch-up","ER Catch-up","ER Catch-Up","er catch-up", "ER catch-up","ER Catch-UP"]}
     
@@ -214,9 +214,13 @@ def effective_deferral(participant):
 
     total_deferral = participant.EE_pre_tax_amount + participant.EE_roth_amount + participant.EE_catch_up
 
-    percentage = (total_deferral / participant.gross_wages) * 100
+    if total_deferral == 0:
+        participant.effective_deferral_percentage = 0
+    
+    else:
+        percentage = (total_deferral / participant.gross_wages) * 100
 
-    participant.effective_deferral_percentage = percentage
+        participant.effective_deferral_percentage = percentage
 
 
 def generate_selections(engagement):
@@ -320,68 +324,68 @@ def generate_selections(engagement):
 
     return sample
 
-'''
-def generate_selections_version_2(engagement,client):
+
+def generate_selections_version_2(engagement):
+    participants=models.participant.objects.filter(engagement=engagement)
+    for i in participants:
+        i.selection=False
+        i.save()
+
     population = models.participant.objects.filter(engagement=engagement)
 
-    new_hires= models.participant.objects.filter(DOH__range=[engagement.date-relativedelta(years=1), engagement.date])
+    new_hires= models.participant.objects.filter(DOH__range=[engagement.date-relativedelta(years=1), engagement.date],engagement=engagement)
 
-    terminations = models.participant.objects.filter(DOT__range=[engagement.date-relativedelta(years=1), engagement.date])
+    terminations = population.exclude(DOT=None)
+    
+    errors = models.participant.objects.filter(error__in=models.error.objects.filter(participant__in=population))
 
-    previous_engagements = models.engagement.objects.filter(client=client).order_by('-date')
 
-    previous_year_engagement = previous_engagements[1]
+    population = new_hires | terminations | errors
 
-    changes = []
+    sample_of_contributing=population.filter(contributing=True)
+    sample_of_non_contributing=population.filter(contributing=False)
+    number_of_contributing = len(population.filter(contributing=True))
+    number_of_non_contributing = len(population.filter(contributing=False))
 
-    for participant in population:
-        error_dict={"First Name":False,"Last Name":False,"SSN":False,"DOB":False,
-    "DOH":False,"DOT":False,"DORH":False, "Key Employee":False,"Eligible":False,"Participating":False}
+    if engagement.soc_1_reliance == False:
+        if len(population) < 250:
+            number_of_selections=round(len(population)*.10)
+        elif len(population) > 250 and len(population) < 2500:
+            number_of_selections=25
+        elif len(population) > 2500 and len(population) < 5000:
+            number_of_selections=45
+        elif len(population) > 5000:
+            number_of_selections=60
+    else:
+        if len(population) < 250:
+            number_of_selections=round(population*.05)
+        elif len(population) > 250 and len(population) < 2500:
+            number_of_selections=12
+        elif len(population) > 2500 and len(population) < 5000:
+            number_of_selections=23
+        elif len(population) > 5000:
+            number_of_selections=30
 
-        if  models.participant.objects.get(SSN__exact=participant.SSN,engagement=previous_year_engagement): 
-            previous_year_data = models.participant.objects.get(SSN__exact=participant.SSN,engagement=previous_year_engagement) 
+    if number_of_non_contributing > number_of_contributing:
+        number_of_cont_selections=min(round(number_of_contributing*.10),10)
+    else:
+        number_of_cont_selections=round((number_of_contributing/len(population))*number_of_selections)
 
-            if participant.first_name != previous_year_data.first_name:
-                error_dict["First Name"]=True
-            elif participant.last_name != previous_year_data.last_name:
-                error_dict["Last Name"]=True
-            
-            elif participant.DOB != previous_year_data.DOB:
-                error_dict["DOB"]=Truechanges.append(participant)
+    number_of_non_cont_selections=number_of_selections-number_of_cont_selections
 
-            elif participant.DOH != previous_year_data.DOH:
-                error_dict["DOH"]=True
+    contributing_selections = sample_of_contributing.random(number_of_cont_selections)
+    non_contributing_selections = sample_of_non_contributing.random(number_of_non_cont_selections)
 
-            elif participant.DOT != previos_year_data.DOT:
-                error_dict["DOT"]=True
-            
-            elif participant.DORH != previous_year_data.DORH:
-                error_dict["DORH"]=True
+    for participant in contributing_selections:
+        participant.selection=True
+        #selections_dict=participant.SSN
+        participant.save()
 
-            elif participant.excluded != previous_year_data.excluded:
-                error_dict["Key Employee"]=True
+    for participant in non_contributing_selections:
+        participant.selection=True
+        participant.save()
 
-            elif participant.eligible != previous_year_data.eligible:
-                error_dict["Eligible"]=True
-            
-            elif participant.participating != previous_year_data.participanting:
-                error_dict["Participating"]=True
-
-            for error in error_dict:
-                if error == True:
-                    changes.append(participant)
-                    break
-
-            changes.append(participant)
-        
-        else:
-
-            if models.participant.objects.get(first_name__exact=participant.first_name,last_name__exact=participant.last_name,engagement=previous_year_engagement) 
-
-                previous_year_data = models.participant.objects.get(first_name__exact=participant.first_name,last_name__exact=participant.last_name,engagement=previous_year_engagement) 
-
-''' 
-
+    return population
 
             
 
@@ -413,10 +417,10 @@ def previous_year_check(participant,py_engagement):
     if py_data.DOH != participant.DOH:
         error_dict["DOH"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of hire changed from the previous year census. You should investigate further.')
         models.error.objects.create(participant=participant,error_message="DOH data does not match previous year census")
-    if py_data.DOT != participant.DOT:
+    '''if py_data.DOT != participant.DOT:
         error_dict["DOT"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of termination changed from the previous year census. You should investigate further.')
-        models.error.objects.create(participant=participant,error_message="DOT data does not match previous year census")
-    if py_data.DORH != participant.DORH:
+        models.error.objects.create(participant=participant,error_message="DOT data does not match previous year census")'''
+    if py_data.DORH != participant.DORH and py_data.DORH!=None:
         error_dict["DORH"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of rehire changed from the previous year census. You should investigate further.')
         models.error.objects.create(participant=participant,error_message="DORH data does not match previous year census")
 

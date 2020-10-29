@@ -1,0 +1,27 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+django = "*"
+psycopg2 = "*"
+django-bootstrap-modal-forms = "*"
+django-crispy-forms = "*"
+pandas = "*"
+xlrd = "*"
+python-dateutil = "*"
+django-widget-tweaks = "*"
+django-random-queryset = "*"
+xlwt = "*"
+djangorestframework = "*"
+markdown = "*"
+django-filter = "*"
+django-datatable-view = "*"
+django-allauth = "*"
+django-guardian = "*"
+
+[requires]
+python_version = "3.7"

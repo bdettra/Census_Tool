@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'main.templatetags.errors_extra',
     'rest_framework',
-    'datatableview',
     'allauth', # new
     'allauth.account', # new
     'guardian',
@@ -125,7 +124,14 @@ WSGI_APPLICATION = 'ebp_auditor.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
+DATABASES={
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase',
+    }
+}
+
+'''DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME':'ebp_auditor',
@@ -134,7 +140,7 @@ DATABASES = {
         'HOST':'127.0.0.1',
         'PORT':5432,
     }
-}
+}'''
 
 
 # Password validation
