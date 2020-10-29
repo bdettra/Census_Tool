@@ -1,30 +1,38 @@
 $(document).ready(function () {
     //Defining the Show Engagement Form Variable
 
-    var ShowEngagementForm = function () {
+    function ShowModalForm(modal_id){
+        console.log(modal_id.data);
         var btn = $(this);
 
         $.ajax({
             url: btn.attr("data-url"),
-
+            
             type: 'get',
 
             dataType: 'json',
 
             beforeSend: function () {
-                $('#modal-new_engagement').modal('show');
+                
+                $(modal_id.data).modal('show');
+                
             },
 
             success: function (data) {
-                $('#modal-new_engagement .modal-content').html(data.html_form);
+                
+                $(modal_id.data +  ' .modal-content').html(data.html_form);
             }
         });
     };
 
-    //Defining the Save Engagement Form Variable
-    var SaveEngagementForm = function () {
-
+    function SaveModalFormTable(html_data){
         var form = $(this);
+        console.log(html_data)
+        table_id = html_data.data[0];
+        modal_id = html_data.data[1];
+
+        console.log(html_data[0]);
+        console.log(table_id);
         
         $.ajax({
             url: form.attr('data-url'),
@@ -38,131 +46,23 @@ $(document).ready(function () {
             success: function (data) {
                 if (data.form_is_valid) {
 
-                    $('#engagement_table').DataTable().ajax.reload();
+                    $(table_id).DataTable().ajax.reload();
                     
-
-                    $('#modal-new_engagement').modal('hide');
-                    console.log('Working');
+                    $(modal_id).modal('hide');
+                    console.log("SaveModalForm Worked")
                 }
                 else {
-                    $('#modal-new_engagement .modal-content').html(data.html_form)
+                    $(modal_id +  ' .modal-content').html(data.html_form)
                 }
             }
 
         })
 
         return false;
+
     };
 
-    //Defining the Show Form Variable
-    var ShowForm = function () {
-        var btn = $(this);
 
-        $.ajax({
-            url: btn.attr("data-url"),
-
-            type: 'get',
-
-            dataType: 'json',
-
-            beforeSend: function () {
-                $('#modal-new_client').modal('show');
-            },
-
-            success: function (data) {
-                $('#modal-new_client .modal-content').html(data.html_form);
-            }
-        });
-    };
-
-    //Defining the Show Edit Client Form variable
-    var ShowEditClientForm = function () {
-        console.log("ShowForm Activated");
-        var btn = $(this);
-
-        $.ajax({
-            url: btn.attr("data-url"),
-
-            type: 'get',
-
-            dataType: 'json',
-
-            beforeSend: function () {
-                $('#modal-edit_client').modal('show');
-            },
-
-            success: function (data) {
-                $('#modal-edit_client .modal-content').html(data.html_form);
-            }
-        });
-    };
-
-    var ShowEditEngagementForm = function () {
-        console.log("ShowForm Activated");
-        var btn = $(this);
-
-        $.ajax({
-            url: btn.attr("data-url"),
-
-            type: 'get',
-
-            dataType: 'json',
-
-            beforeSend: function () {
-                $('#modal-edit_engagement').modal('show');
-            },
-
-            success: function (data) {
-                $('#modal-edit_engagement .modal-content').html(data.html_form);
-            }
-        });
-    };
-
-    var ShowEditPrimaryClientUserForm = function () {
-        console.log("ShowForm Activated");
-        var btn = $(this);
-
-        $.ajax({
-            url: btn.attr("data-url"),
-
-            type: 'get',
-
-            dataType: 'json',
-
-            beforeSend: function () {
-                $('#modal-edit_primary_client_user').modal('show');
-            },
-
-            success: function (data) {
-                $('#modal-edit_primary_client_user .modal-content').html(data.html_form);
-            }
-        });
-    };
-
-    //Defining the Show Eligiblity Form
-    var ShowEligiblityForm = function (){
-        console.log("Eligiblity Form Activated");
-        $('.ajaxProgress').show();
-        var btn=$(this);
-
-        $.ajax({
-
-            url: btn.attr("data-url"),
-
-            type: 'get',
-
-            dataType: 'json',
-
-            beforeSend: function (){
-                $('#modal-eligibility_rules').modal('show');
-            },
-            success: function (data){
-                $('.ajaxProgress').hide();
-                $('#modal-eligibility_rules .modal-content').html(data.html_form);
-            }
-
-        })
-    }
 
     //Defining the Save Eligiblity Form variable
     var SaveEligibilityForm = function() {
@@ -200,378 +100,6 @@ $(document).ready(function () {
         return false;
     };
 
-    //Defining the Show Census Form Variable
-    var ShowCensusForm = function (){
-        console.log("Census Form Working")
-        var btn = $(this);
-
-        $.ajax({
-
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend:function(){
-                $("#upload_census").modal("show");
-            },
-
-            success: function(data){
-                $("#upload_census .modal-content").html(data.html_form)
-            }
-            
-        })
-    };
-
-
-    //Defining the Show Key Employee Form Variable
-    var KeyEmployeeForm = function (){
-        $('.ajaxProgress').show()
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-key_employee").modal("show");
-            },
-
-            success: function (data){
-                $('.ajaxProgress').hide();
-                $("#modal-key_employee .modal-content").html(data.html_form);
-            }
-        })
-    };
-
-    //Defining the Save Key Employee Form variable
-    var SaveKeyEmployeeForm = function() {
-        $('.ajaxProgress').show()
-        var form = $(this);
-        $.ajax({
-
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType: 'json',
-
-            success: function (data) {
-                if (data.form_is_valid) {
-                    $('.ajaxProgress').hide()
-                    //$('#census_table tbody').html(data.engagements)
-                    $('#census_table').DataTable().ajax.reload();
-                    $('#modal-key_employee').modal('hide');
-                    
-                }
-                else {
-                    $('#modal-key_employee .modal-content').html(data.html_form)
-                }
-            }
-
-        })
-
-        return false;
-    };
-
-    //Defning the Show Make Selection Form variable
-    var ShowMakeSelectionsForm = function (){
-
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-selections").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-selections .modal-content").html(data.html_form);
-            }
-        })
-    };
-
-    //Defining the Save Selection Form
-    var SaveSelections = function() {
-        var form = $(this);
-        $.ajax({
-
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType: 'json',
-
-            success: function (data) {
-                if (data.form_is_valid) {
-                    $('#census_table').DataTable().ajax.reload();
-
-                    $('#modal-selections').modal('hide');
-                
-                }
-                else {
-                    $('#modal-selections .modal-content').html(data.html_form)
-                }
-            }
-
-        })
-
-        return false;
-    };
-
-    var ShowEditSelectionsForm = function (){
-
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-edit_selections").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-edit_selections .modal-content").html(data.html_form);
-            }
-        })
-    };
-
-    var SaveEditSelectionsForm = function() {
-        var form = $(this);
-        $.ajax({
-
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType: 'json',
-
-            success: function (data) {
-                if (data.form_is_valid) {
-                    $('#census_table').DataTable().ajax.reload();
-
-                    $('#modal-edit_selections').modal('hide');
-                
-                }
-                else {
-                    $('#modal-edit_selections .modal-content').html(data.html_form)
-                }
-            }
-
-        })
-
-        return false;
-    };
-
-    //Defining the Census Statistics variable
-    var CensusStatistics = function (){
-        console.log("Census Statistics");
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-census_statistics").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-census_statistics .modal-content").html(data.html_form);
-            }
-        })
-    };
-
-    var EngagementProfile = function (){
-        console.log("Engagement Profile");
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-view_engagement_profile").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-view_engagement_profile .modal-content").html(data.html_form);
-            }
-        })
-    };
-
-    //Defining the Census Statistics variable
-    var ShowPreviousSeletions = function (){
-        console.log("PY Selections");
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-py_selections").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-py_selections .modal-content").html(data.html_form);
-            }
-        })
-    };    
-
-    //Defining the View Selection form variable
-    var ViewSelections = function (){
-        var btn = $(this);
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-view_selections").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-view_selections .modal-content").html(data.html_form);
-            }
-        })
-    };
-    
-    //Defining the Show Delete Form Variable
-    var ShowDeleteForm = function () {
-        var btn=$(this);
-
-        $.ajax({
-
-            url: btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:'json',
-
-            beforeSend: function (){
-                $('#modal-delete_client').modal('show');
-            },
-
-            success: function (data) {
-                $('#modal-delete_client .modal-content').html(data.html_form);
-
-            }
-
-        });
-    };
-
-    //Defining the Save Delete Form variable
-    var SaveDeleteForm = function () {
-        var form =$(this);
-
-        $.ajax({
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType:'json',
-
-            success: function (data){
-                $('#modal-delete_client').modal('hide');
-            }
-        });
-        $('#modal-delete_client').modal('hide');
-        return false;
-    };
-       //Defining the Save Delete Form variable
-       var SaveEngagementDeleteForm = function () {
-        var form =$(this);
-
-        $.ajax({
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType:'json',
-
-            success: function (data){
-                $('#modal-delete_client').modal('hide');
-            }
-        });
-        $('#modal-delete_client').modal('hide');
-        return false;
-    };
-    
-
-
-    //Defining the save form variable
-    var SaveForm = function () {
-        var form = $(this);
-
-        $.ajax({
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType: 'json',
-
-            success: function (data) {
-                if (data.form_is_valid) {
-
-                    $('#client_table').DataTable().ajax.reload();
-
-                    $('#modal-new_client').modal('hide');
-                
-                }
-                else{
-                    $('#modal-new_client .modal-content').html(data.html_form)
-                }
-            }
-
-        })
-
-        return false;
-    };
 
     //Defining the Save Edit Form Variable
     var SaveEditForm = function () {
@@ -671,144 +199,82 @@ $(document).ready(function () {
         return false;
     };
 
-    var ViewErrors = function (){
-        var btn = $(this);
-        console.log("Working");
-
-        $.ajax({
-            
-            url:btn.attr("data-url"),
-
-            type:'get',
-
-            dataType:"json",
-
-            beforeSend: function (){
-                $("#modal-view_errors").modal("show");
-            },
-
-            success: function (data){
-                $("#modal-view_errors .modal-content").html(data.html_form);
-                console.log("Worked");
-            }
-        })
-    };
-
-    //Defining the Save Key Employee Form variable
-    var SaveErrorsForm = function() {
-        $('.ajaxProgress').show()
-        var form = $(this);
-        console.log("Save Error Form Running")
-        $.ajax({
-
-            url: form.attr('data-url'),
-
-            data: form.serialize(),
-
-            type: form.attr('method'),
-
-            dataType: 'json',
-
-            success: function (data) {
-                if (data.form_is_valid) {
-                    $('.ajaxProgress').hide();
-                
-                    
-                    $('#census_table').DataTable().ajax.reload();
-
-                    $('#modal-view_errors').modal('hide');
-                }
-                else {
-                    $('#modal-view_errors.modal-content').html(data.html_form)
-                }
-            }
-
-        })
-
-        return false;
-    };
 
     
 
     // Create Client
-    $(".show-client_form").click(ShowForm);
-    
-    $("#modal-new_client").on("submit", ".create-client_form", SaveForm);
+    $(".show-client_form").click('#modal-new_client',ShowModalForm);
+    $("#modal-new_client").on("submit", ".create-client_form",['#client_table','#modal-new_client'], SaveModalFormTable);
+
 
     //Edit Client
-    $(".show-edit_client_form").click(ShowEditClientForm);
-    
+    $(".show-edit_client_form").click('#modal-edit_client',ShowModalForm);
     $('#modal-edit_client').on("submit",".edit-client_form",SaveEditForm);
 
 
     //Edit Primary Client User
-    $(".show-edit_primary_client_user_form").click(ShowEditPrimaryClientUserForm);
+    $(".show-edit_primary_client_user_form").click('#modal-edit_primary_client_user',ShowModalForm);
     $('#modal-edit_primary_client_user').on("submit",".edit-primary_client_user_form",SaveEditPrimaryUserForm);
-    // Edit Eligiblity
-    $(".show-form").click(ShowEligiblityForm);
-    $("#modal-eligibility_rules").on("submit",".eligibility-form",SaveEligibilityForm);
-
+    
 
     // Create Engagement
-    $(".show-engagement_form").click(ShowEngagementForm);
-    $("#modal-new_engagement").on("submit", ".create-form", SaveEngagementForm);
+    $(".show-engagement_form").click("#modal-new_engagement", ShowModalForm);
+    $("#modal-new_engagement").on("submit", ".create-form", ['#engagement_table','#modal-new_engagement'],SaveModalFormTable);
 
 
     //Edit Engagement
-    $(".show-edit_engagement_form").click(ShowEditEngagementForm);
+    $(".show-edit_engagement_form").click('#modal-edit_engagement',ShowModalForm);
     $('#modal-edit_engagement').on("submit",".edit-engagement_form",SaveEditEngagementForm);
 
-    //Create Key Employees
-    $(".show-key_employee-form").click(KeyEmployeeForm);
-    $("#modal-key_employee").on("submit",".key_employee-form",SaveKeyEmployeeForm);
+    //Add Client Contact
+    $(".show-add_contact_form").click('#modal-add_contact_form',ShowModalForm);
+    $("#modal-add_contact_form").on("submit", ".add_contact_form",['#census_table','#modal-add_contact_form'], SaveModalFormTable);
 
-    $(".show-selections_form").click(ShowMakeSelectionsForm);
-    $("#modal-selections").on("submit",".selections-form",SaveSelections);
+    //Delete Client Contact
+    $(".show-delete_contact_form").click('#modal-delete_contact',ShowModalForm);
+    $("#modal-delete_contact").on("submit",".delete_contacts-form",['#census_table', '#modal-delete_contact'],SaveModalFormTable);
+    
+    // Edit Eligiblity
+    $(".show-form").click('#modal-eligibility_rules',ShowModalForm);
+    $("#modal-eligibility_rules").on("submit",".eligibility-form",SaveEligibilityForm);
+
+
+    //Create Key Employees
+    $(".show-key_employee-form").click("#modal-key_employee",ShowModalForm);
+    $("#modal-key_employee").on("submit",".key_employee-form",['#census_table','#modal-key_employee'],SaveModalFormTable);
+
+
+    //Make Selections
+    $(".show-selections_form").click("#modal-selections",ShowModalForm);
+    $("#modal-selections").on("submit",".selections-form",['#census_table','#modal-selections'],SaveModalFormTable);
+
 
     //Edit Selections
-
-    $(".show-edit_selections_form").click(ShowEditSelectionsForm);
-    $("#modal-edit_selections").on("submit",".edit_selections_form",SaveEditSelectionsForm);
+    $(".show-edit_selections_form").click("#modal-edit_selections",ShowModalForm);
+    $("#modal-edit_selections").on("submit",".edit_selections_form",['#census_table','#modal-edit_selections'],SaveModalFormTable);
 
 
     //Show Census Statistics
-    $(".show-census_statistics-form").click(CensusStatistics);
+    $(".show-census_statistics-form").click("#modal-census_statistics",ShowModalForm);
 
-    //Show Engagement PRofile
-    $(".show-view_engagement_profile").click(EngagementProfile);    
+    //Show Engagement Profile
+    $(".show-view_engagement_profile").click("#modal-view_engagement_profile",ShowModalForm);    
 
     //Show PY Selections
-    $(".show-py_selections").click(ShowPreviousSeletions)
+    $(".show-py_selections").click("#modal-py_selections",ShowModalForm)
 
     //Show Selections
-    $(".view-selections_form").click(ViewSelections);
+    $(".view-selections_form").click("#modal-view_selections",ShowModalForm);
 
     //Show Upload Census Form
-    $(".upload-census_form").click(ShowCensusForm);
-
-    
-
-    
-    //Update Client List
-    $('#client_list').on("click", ".show-form-update", ShowForm);
-    $("#modal-new_client").on("submit", ".update-form", SaveForm);
-    
-
-    //Update Engagement List
-    $('#engagement_list').on("click", ".show-form-update", ShowEngagementForm)
-    $("#modal-new_engagement").on("submit", ".update-form", SaveEngagementForm);
+    $(".upload-census_form").click("#upload_census",ShowModalForm);
 
     //Update Census Table
     $('#census_list').on("click")
 
-    /*
-    $(".show-delete-form").click(ShowDeleteForm);
-    $("#modal-delete_client").on("submit",".delete-form", SaveDeleteForm);
-    */
-    //Show Errors
-    $(".show-view_errors").click(ViewErrors);
-
-    $("#modal-view_errors").on("submit",".view_errors-form",SaveErrorsForm);
+    //Show and Save Errors
+    $(".show-view_errors").click("#modal-view_errors",ShowModalForm);
+    $("#modal-view_errors").on("submit",".view_errors-form",['#census_table', '#modal-view_errors'],SaveModalFormTable);
 
     $("td").tooltip({container:'body'});
 

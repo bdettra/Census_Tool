@@ -363,6 +363,33 @@ class KeyEmployee(forms.ModelForm):
 
         return self.cleaned_data
 
+class NewClientContact(forms.ModelForm):
+
+    def __init__(self,engagement,*args,**kwargs):
+        self.engagement=engagement
+        super().__init__(*args,**kwargs)
+
+    class Meta:
+        model=models.client_contact
+        fields=['first_name','last_name','position','email']
+        widgets={'first_name':forms.fields.TextInput(attrs={'placeholder':'First Name','class':'form-control'}),
+                'last_name':forms.fields.TextInput(attrs = {'placeholder':'Last Name','class':'form-control'}),
+                'position':forms.fields.TextInput(attrs = {'placeholder':'Position','class':'form-control'}),
+                'email':forms.fields.TextInput(attrs = {'placeholder':'Email Address','class':'form-control'})}
+
+    def save(self):
+        first_name = self.cleaned_data.get("first_name")
+        last_name = self.cleaned_data.get("last_name")
+        position = self.cleaned_data.get("position")
+        email = self.cleaned_data.get("email")
+        engagement=self.engagement
+
+        instance = models.client_contact.objects.create(first_name=first_name,last_name=last_name,position=position,email=email,engagement=engagement)
+        instance.save()
+
+
+
+
 class EditSelection(forms.ModelForm):
     class Meta:
         model=models.participant
@@ -382,6 +409,12 @@ class ErrorForm(forms.ModelForm):
         model=models.error
         fields=['error_message']
         widgets={"error_message":forms.HiddenInput()}
+
+class ContactDeleteForm(forms.ModelForm):
+    class Meta:
+        model=models.client_contact
+        fields=['first_name']
+        widgets={"first_name":forms.HiddenInput()}
     
 
 

@@ -1,0 +1,48 @@
+{% block content %}
+{% load crispy_forms_tags %}
+{% load widget_tweaks %}
+{% load static %}
+
+ 
+<form method="post" data-url="{% url 'delete_contact' client.slug engagement.slug %}" class="delete_contacts-form">
+
+    {% csrf_token %}
+    {{ formset.management_form }}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Client Contacts</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    <div class="modal-body">
+        <ul class="list-group list-group-flush">
+            {% if client_contacts %}
+                {% for form in formset %}
+                <li class="list-group-item">{% for field in form %}{% render_field field %}{% endfor %} {{form.instance.first_name}} {{form.instance.last_name}} - {{form.instance.position}} - {{form.instance.email}}</li>
+                {% endfor %}
+            {% else %}
+                <p>There are no errors in the census</p>
+            {% endif %}
+          </ul>
+    </div>
+
+    <div class="modal-footer">
+        {% if client_contacts %}
+            <button type="submit" class="btn btn-danger">Delete Contact</button>
+        {% endif %}
+
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+    </div>
+
+
+</form>
+
+{% endblock content %}
+
+<div class="ajaxProgress">
+    <h3>Loading</h3>
+    <img src="{% static 'main/images/ajax-loader.gif' %}" alt="loading"/>
+</div>

@@ -20,7 +20,6 @@ class engagement(models.Model):
     client=models.ForeignKey(client,on_delete=models.CASCADE)
     slug=models.SlugField()
     soc_1_reliance=models.BooleanField(default=False)
-
     primary_user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE, related_name="primary_engagement_user")
 
 class eligibility_rules(models.Model):
@@ -104,6 +103,15 @@ class error(models.Model):
 
     def __str__(self):
         return self.error_message
+
+class client_contact(models.Model):
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    position = models.CharField(max_length=100)
+    email=models.EmailField()
+    engagement=models.ForeignKey(engagement,on_delete=models.CASCADE)
+
+
     
 
 

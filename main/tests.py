@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 from . import models
 from django.utils.text import slugify
+import datetime
 
 class HomepageTests(SimpleTestCase):
     def setUp(self):
@@ -98,7 +99,7 @@ class ClientTests(TestCase):
             password="aldrich123",
         )
         self.user=get_user_model().objects.get(first_name="Rick")
-        self.test_client = models.client.objects.create(name="Test Client",number=1.0,slug='test-client')
+        self.test_client = models.client.objects.create(name="Test Client",number=1.0,slug='test-client',primary_user=self.user)
         self.test_client.users.add(self.user)
         self.test_client.save()
 
@@ -124,6 +125,30 @@ class ClientTests(TestCase):
         response = self.client.get('%s?next=/dashboard/' % (reverse('account_login')))
         self.assertContains(response,'Use a local account to log in.')
 
+    def test_delete_client_for_primary_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('delete_client',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,200)
+
+    def test_delete_client_for_non_primary_user(self):
+        emma=get_user_model().objects.create(
+            email="testuser@email.com",
+            password="aldrich123",
+            first_name="Emma",
+            last_name="Wagner"
+        )
+        emma = get_user_model().objects.get(first_name="Emma")
+
+        self.client.login(email="testuser@email.com",password="aldrich123")
+
+        response = self.client.get(reverse('delete_client',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,403)
+        
+
+
+        
+    
+
 class CreateClientTests(TestCase):
 
     def setUp(self):
@@ -134,14 +159,14 @@ class CreateClientTests(TestCase):
             password="aldrich123",
         )
         self.user=get_user_model().objects.get(first_name="Rick")
-        self.test_client = models.client.objects.create(name="Test Client",number=1.0,slug='test-client')
+        self.test_client = models.client.objects.create(name="Test Client",number=1.0,slug='test-client',primary_user=self.user)
         self.test_client.users.add(self.user)
         self.test_client.save()
 
     def test_create_client_form(self):
         name="Test Client #2"
         slug = slugify(name)
-        new_client = models.client.objects.create(name=name,number=2.0,slug=slug)
+        new_client = models.client.objects.create(name=name,number=2.0,slug=slug,primary_user=self.user)
         
         self.assertEqual(models.client.objects.all().count(),2)
         self.assertEqual(models.client.objects.all()[1].name,name)
@@ -210,9 +235,130 @@ class CreateClientTests(TestCase):
         self.assertTemplateUsed(response,'client_dashboard.html')
 
     def test_client_with_same_name(self):
-        self.assertRaises(Exception,models.client.objects.create(name="Test Client",number=2.0))
+        self.assertRaises(Exception,models.client.objects.create(name="Test Client",number=2.0,primary_user=self.user))
 
-        self.assertRaises(Exception,models.client.objects.create(name="New Test Client",number=1.0))
+        self.assertRaises(Exception,models.client.objects.create(name="New Test Client",number=1.0,primary_user=self.user))
+
+    def test_client_with_same_number(self):
+        self.assertRaises(Exception,models.client.objects.create(name="Test Client",number=2.0,primary_user=self.user))
+
+        self.assertRaises(Exception,models.client.objects.create(name="Test Client #2",number=2.0,primary_user=self.user))
+
+
+class EngagementTests(TestCase):
+
+    def setUp(self):
+        self.user=get_user_model().objects.create_user(
+            first_name="Rick",
+            last_name="Hiller",
+            email="rhiller@gmail.com",
+            password="aldrich123",
+        )
+        self.user=get_user_model().objects.get(first_name="Rick")
+        self.test_client = models.client.objects.create(name="Test Client",number=1.0,slug='test-client',primary_user=self.user)
+        self.test_client.users.add(self.user)
+        self.test_client.save()
+
+        
+        self.engagement = models.engagement.objects.create(name="2018 401(k) Engagement",
+                        date="2018-12-31",
+                        slug=slugify("2018 401(k) Engagement"),
+                        soc_1_reliance=False,
+                        primary_user=self.user,
+                        client=self.test_client)
+
+    def test_create_engagement_form(self):
+        name = "2019 401(k) Engagement"
+        date = "2019-12-31"
+        slug = slugify(name)
+        soc_1_reliance = False
+        primary_user = self.user
+        client=self.test_client
+
+        new_engagement=models.engagement.objects.create(name=name,
+            date=date,
+            slug=slug,
+            soc_1_reliance=soc_1_reliance,
+            primary_user=primary_user,
+            client=client)
+
+        self.assertEqual(models.engagement.objects.all().count(),2)
+        self.assertEqual(models.engagement.objects.all()[1].name,name)
+        self.assertEqual(models.engagement.objects.all()[1].date,datetime.date(2019,12,31))
+
+
+    def test_create_engagement_view_for_logged_in_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('create_engagement',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,"Engagement Name")
+        self.assertTemplateUsed(response,'new_engagement.html')
+
+    def test_create_engagement_view_for_logged_out_user(self):
+        self.client.logout()
+        response = self.client.get(reverse('create_engagement',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,302)
+        self.assertRedirects(response,'%s?next=/dashboard/client_page/test-client/new_engagement' % (reverse('account_login')))
+        response = self.client.get('%s?next=/dashboard/client_page/test-client/new_engagement' % (reverse('account_login')))
+        self.assertContains(response,'Use a local account to log in.')
+
+    def test_edit_engagement_for_primary_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('edit_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,"Edit Engagement Profile")
+        self.assertTemplateUsed(response,'edit_engagement.html')
+
+
+
+    def test_edit_engagement_for_non_primary_user(self):
+        emma = get_user_model().objects.create(
+            email="testuser@email.com",
+            password="aldrich123",
+            first_name="Emma",
+            last_name="Wanger",
+        )
+
+        emma = get_user_model().objects.get(first_name="Emma")
+        rick = get_user_model().objects.get(first_name="Rick")
+
+        self.test_client.users.add(emma)
+        self.test_client.save()
+
+        self.client.login(email="testuser@email.com",password="aldrich123")
+        response = self.client.get(reverse('edit_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,302)
+
+    def test_delete_engagement_for_primary_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('delete_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,"Delete Engagement")
+    
+       
+
+    def test_delete_engagement_for_non_primary_user(self):
+        emma = get_user_model().objects.create(
+            email="testuser@email.com",
+            password="aldrich123",
+            first_name="Emma",
+            last_name="Wanger",
+        )
+
+        emma = get_user_model().objects.get(first_name="Emma")
+        rick = get_user_model().objects.get(first_name="Rick")
+
+        self.test_client.users.add(emma)
+        self.test_client.save()
+
+        self.client.login(email="testuser@email.com",password="aldrich123")
+        response = self.client.get(reverse('delete_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,302)
+
+        
+
+        
+
 
 
         

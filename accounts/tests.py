@@ -34,7 +34,7 @@ class CustomUserTests(TestCase):
         self.assertTrue(admin_user.is_superuser)
 
 
-class SignupTests(TestCase): # new
+class SignupTests(TestCase): 
 
     email = 'newuser@email.com'
 
@@ -52,6 +52,6 @@ class SignupTests(TestCase): # new
 
     def test_signup_form(self):
         new_user = get_user_model().objects.create_user(self.email)
-        self.assertEqual(get_user_model().objects.all().count(), 1)
+        self.assertEqual(get_user_model().objects.all().count(), 2)
         self.assertEqual(get_user_model().objects.all()
-                         [0].email, self.email)
+                         [1].email, self.email)
