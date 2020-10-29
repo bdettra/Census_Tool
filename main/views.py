@@ -175,7 +175,7 @@ class EngagementDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def test_func(self):
         
         self.object=self.get_object()
-        print(self.object)
+        
         
         return self.request.user == self.object.primary_user
 
@@ -188,16 +188,18 @@ class EngagementDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 
 
-class CreateEngagement(TemplateView):
+class CreateEngagement(LoginRequiredMixin,TemplateView):
     '''Creates a new engagement and adds it to the engagement table'''
 
+    
+
     template_name="new_engagement.html"
+    login_url='/accounts/login/'
 
     def get(self,request, slug, *args,**kwargs):
         data=dict()
         client_object=models.client.objects.get(slug=slug)
         new_engagement_form=forms.NewEngagementForm(client=client_object)
-        print(new_engagement_form)
         context_object={'form':new_engagement_form, "client":client_object}
         data['html_form']=render_to_string('new_engagement.html',context_object,request=request)
         return JsonResponse(data)
@@ -206,7 +208,6 @@ class CreateEngagement(TemplateView):
         data=dict()
         client_object=models.client.objects.get(slug=slug)
         form=forms.NewEngagementForm(client_object,request.POST)
-        print(form.client)
         data['form_is_valid']=False
         if form.is_valid():
             name=request.POST.get('name')
@@ -265,7 +266,7 @@ class EditEngagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         client = models.client.objects.get(slug=client_slug)
         primary_user = client.primary_user
 
-        print(primary_user.email)
+        
         return self.request.user == primary_user
 
 
@@ -275,11 +276,9 @@ class EditEngagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         data=dict()
         client=models.client.objects.get(slug=slug)
         engagement = models.engagement.objects.get(slug=Eslug,client=client)
-        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
-        participants = models.participant.objects.filter(engagement=engagement)
         form=forms.EditEngagementForm(instance=engagement,engagement=engagement)
 
-        context_object={"client":client,"engagement":engagement,"form":form,"participants":participants}
+        context_object={"client":client,"engagement":engagement,"form":form,}
         data['html_form']=render_to_string('edit_engagement.html',context_object,request=request)
         
         return JsonResponse(data)
@@ -302,7 +301,7 @@ class EditEngagementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         context_object={"client":client,"form":form,"engagement":engagement,"participants":participants}
         data['html_form']=render_to_string('edit_engagement.html',context_object,request=request)
-        print("WORKING")
+        
         return JsonResponse(data)  
 
 
@@ -315,7 +314,7 @@ class ViewEngagementProfile(LoginRequiredMixin, TemplateView):
         client = models.client.objects.get(slug=client_slug)
         primary_user = client.primary_user
 
-        print(primary_user.email)
+       
         return self.request.user == primary_user
 
 
@@ -540,7 +539,6 @@ class KeyEmployee(UserPassesTestMixin, TemplateView):
         errors=False
         for participant in participants:
             if len(participant.error_set.all()) > 0:
-                print("Numebr of Errors:" + str(len(participant.error_set.all())))
                 errors=True
                 break
 
@@ -629,14 +627,14 @@ class MakeSelections(UserPassesTestMixin, TemplateView):
         return JsonResponse(data)
 
     def post(self,request,slug, Eslug,*args,**kwargs):
-        print("working")
+       
         data=dict()
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
         eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
 
         x = plugin.generate_selections(engagement)
-        print(x)
+       
 
         #print(plugin.generate_selections_version_2(engagement,client))
         participants=models.participant.objects.filter(engagement=engagement)
@@ -718,7 +716,7 @@ class EditClient(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         client = models.client.objects.get(slug=client_slug)
         primary_user = client.primary_user
 
-        print(primary_user.email)
+        
         return self.request.user == primary_user
 
 
@@ -761,14 +759,14 @@ class EditPrimaryClientUser(LoginRequiredMixin, UserPassesTestMixin, TemplateVie
         client = models.client.objects.get(slug=client_slug)
         primary_user = client.primary_user
 
-        print(primary_user.email)
+        
         return self.request.user == primary_user
 
 
     template_name="edit_client_primary_user.html"
 
     def get(self,request,slug,*args,**kwargs):
-        print("Working")
+        
         data=dict()
         client=models.client.objects.get(slug=slug)
         form=forms.EditClientUserForm(instance=client,client=client)
@@ -1278,7 +1276,7 @@ class AddClientContact(LoginRequiredMixin, TemplateView):
         context_object={"client":client,"engagement":engagement,"form":form,"participants":participants,"eligiblity_rules":eligibility_rules}
         data['html_form']=render_to_string('add_client_contact.html',context_object,request=request)
         
-        print("Worked")
+        
         return JsonResponse(data)
 
 
@@ -1296,7 +1294,7 @@ class AddClientContact(LoginRequiredMixin, TemplateView):
         eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
         participants = models.participant.objects.filter(engagement=engagement)
         
-        print(data["form_is_valid"])
+        
         context_object={"client":client,"form":form,"engagement":engagement,"participants":participants}
         data['html_form']=render_to_string('add_client_contact.html',context_object,request=request)
         return JsonResponse(data)  
@@ -1307,7 +1305,6 @@ class DeleteClientContact(LoginRequiredMixin,TemplateView):
     login_url="/accounts/login/"
     
     def get(self,request,slug,Eslug,*args,**kwargs):
-        print(slug)
         data=dict()
         client = models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
@@ -1349,7 +1346,7 @@ class DeleteClientContact(LoginRequiredMixin,TemplateView):
 
 @login_required  
 def export_selections(request,slug,Eslug):
-    print('Working')
+    
 
     client=models.client.objects.get(slug=slug)
 
@@ -1511,7 +1508,6 @@ class ViewErrors(LoginRequiredMixin,UserPassesTestMixin, TemplateView):
         errors=False
         for participant in participants:
             if len(participant.error_set.all()) > 0:
-                print("Number of Errors:" + str(len(participant.error_set.all())))
                 errors=True
                 break
         
@@ -1530,7 +1526,6 @@ class ViewErrors(LoginRequiredMixin,UserPassesTestMixin, TemplateView):
 
 @login_required  
 def export_errors(request,slug,Eslug):
-    print('Working')
 
     client=models.client.objects.get(slug=slug)
 

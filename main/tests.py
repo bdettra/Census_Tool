@@ -125,6 +125,30 @@ class ClientTests(TestCase):
         response = self.client.get('%s?next=/dashboard/' % (reverse('account_login')))
         self.assertContains(response,'Use a local account to log in.')
 
+    def test_delete_client_for_primary_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('delete_client',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,200)
+
+    def test_delete_client_for_non_primary_user(self):
+        emma=get_user_model().objects.create(
+            email="testuser@email.com",
+            password="aldrich123",
+            first_name="Emma",
+            last_name="Wagner"
+        )
+        emma = get_user_model().objects.get(first_name="Emma")
+
+        self.client.login(email="testuser@email.com",password="aldrich123")
+
+        response = self.client.get(reverse('delete_client',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,403)
+        
+
+
+        
+    
+
 class CreateClientTests(TestCase):
 
     def setUp(self):
@@ -215,6 +239,11 @@ class CreateClientTests(TestCase):
 
         self.assertRaises(Exception,models.client.objects.create(name="New Test Client",number=1.0,primary_user=self.user))
 
+    def test_client_with_same_number(self):
+        self.assertRaises(Exception,models.client.objects.create(name="Test Client",number=2.0,primary_user=self.user))
+
+        self.assertRaises(Exception,models.client.objects.create(name="Test Client #2",number=2.0,primary_user=self.user))
+
 
 class EngagementTests(TestCase):
 
@@ -258,6 +287,75 @@ class EngagementTests(TestCase):
         self.assertEqual(models.engagement.objects.all()[1].date,datetime.date(2019,12,31))
 
 
+    def test_create_engagement_view_for_logged_in_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('create_engagement',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,"Engagement Name")
+        self.assertTemplateUsed(response,'new_engagement.html')
+
+    def test_create_engagement_view_for_logged_out_user(self):
+        self.client.logout()
+        response = self.client.get(reverse('create_engagement',args=[self.test_client.slug]))
+        self.assertEqual(response.status_code,302)
+        self.assertRedirects(response,'%s?next=/dashboard/client_page/test-client/new_engagement' % (reverse('account_login')))
+        response = self.client.get('%s?next=/dashboard/client_page/test-client/new_engagement' % (reverse('account_login')))
+        self.assertContains(response,'Use a local account to log in.')
+
+    def test_edit_engagement_for_primary_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('edit_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,"Edit Engagement Profile")
+        self.assertTemplateUsed(response,'edit_engagement.html')
+
+
+
+    def test_edit_engagement_for_non_primary_user(self):
+        emma = get_user_model().objects.create(
+            email="testuser@email.com",
+            password="aldrich123",
+            first_name="Emma",
+            last_name="Wanger",
+        )
+
+        emma = get_user_model().objects.get(first_name="Emma")
+        rick = get_user_model().objects.get(first_name="Rick")
+
+        self.test_client.users.add(emma)
+        self.test_client.save()
+
+        self.client.login(email="testuser@email.com",password="aldrich123")
+        response = self.client.get(reverse('edit_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,302)
+
+    def test_delete_engagement_for_primary_user(self):
+        self.client.login(email="rhiller@gmail.com",password="aldrich123")
+        response = self.client.get(reverse('delete_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,200)
+        self.assertContains(response,"Delete Engagement")
+    
+       
+
+    def test_delete_engagement_for_non_primary_user(self):
+        emma = get_user_model().objects.create(
+            email="testuser@email.com",
+            password="aldrich123",
+            first_name="Emma",
+            last_name="Wanger",
+        )
+
+        emma = get_user_model().objects.get(first_name="Emma")
+        rick = get_user_model().objects.get(first_name="Rick")
+
+        self.test_client.users.add(emma)
+        self.test_client.save()
+
+        self.client.login(email="testuser@email.com",password="aldrich123")
+        response = self.client.get(reverse('delete_engagement',args=[self.test_client.slug,self.engagement.slug]))
+        self.assertEqual(response.status_code,302)
+
+        
 
         
 
