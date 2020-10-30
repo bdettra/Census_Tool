@@ -899,6 +899,8 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             messages.error(self.request,"The file that imported is not in excel format")
             return render(request,"engagement_page.html",context=context)
         
+
+        print(data)
         #Creating a columns variable from our dataset 
         columns=data.columns
         location_dict=plugin.location_dict(columns)
@@ -959,7 +961,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 full_ssn_pattern=re.compile('[0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]')
                 partial_snn_pattern=re.compile('[0-9][0-9][0-9][0-9]')
                 if full_ssn_pattern.fullmatch(ssn) != None or partial_snn_pattern.fullmatch(ssn) != None:
-                    participant, created=models.participant.objects.update_or_create(SSN=data.iloc[i,location_dict['SSN']],engagement=engagement)
+                    participant=models.participant.objects.create(SSN=data.iloc[i,location_dict['SSN']],engagement=engagement)
                 else:
                     messages.error(self.request,"The SSN in row " + str(i+1) + " is not in the correct format. Census stopped processing at that employee.")
                     return render(request,"engagement_page.html",context=context)
@@ -1024,7 +1026,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
                 participant.DOT=data.iloc[i,location_dict['DOT']].date()
                 participant.save()
-                if participant.DOT < (engagement.date - relativedelta(years=1)) and participant.DORH==None:
+                if (participant.DOT < (engagement.date - relativedelta(years=1))) and participant.DORH==None:
                     error=models.error.objects.create(participant=participant,error_message="DOT is before engagement year")
                     #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
 
@@ -1205,6 +1207,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
             if py_engagement != False:
                 error_messages=plugin.previous_year_check(participant,py_engagement)
+
                 for key, value in error_messages.items():
                     if value != False:
                         messages.error(self.request,value)

@@ -15,12 +15,29 @@ class client(models.Model):
     primary_user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE, related_name="primary_client_user")
 
 class engagement(models.Model):
+    PAYROLL=(
+        ("Paylocity","Paylocity"),
+        ("ADP","ADP"),
+        ("PayChex","PayChex"),
+    )
+
+    TPA = (
+        ("Principal","Principal"),
+        ("Fidelity","Fidelity"),
+        ("Empower","Empower"),
+        ("Milliman","Milliman"),
+    )
+
+
     name=models.CharField(max_length=50,verbose_name="Engagement Name: ")
     date=models.DateField()
     client=models.ForeignKey(client,on_delete=models.CASCADE)
     slug=models.SlugField()
     soc_1_reliance=models.BooleanField(default=False)
     primary_user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE, related_name="primary_engagement_user")
+    first_year = models.BooleanField(default=False)
+    payroll_provider = models.CharField(choices=PAYROLL,max_length=50)
+    tpa=models.CharField(choices=TPA,max_length=50)
 
 class eligibility_rules(models.Model):
     CHOICES=(

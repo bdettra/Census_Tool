@@ -14,6 +14,9 @@
             <li class="list-group-item"><strong>Engagement Name: </strong>{{engagement.name}}</li>
             <li class="list-group-item"><strong>Engagement Date: </strong>{{engagement.date}}</li>
             <li class="list-group-item"><strong>Soc 1 Reliance: </strong>{% if engagement.soc_1_reliance == True %}Yes{% else %}No{% endif %}</li>
+            <li class="list-group-item"><strong>First Year Audit: </strong>{% if engagement.first_year == True %}Yes{% else %}No{% endif %}</li>
+            <li class="list-group-item"><strong>TPA: </strong>{{engagement.tpa}}</li>
+            <li class="list-group-item"><strong>Payroll Provider: </strong>{{engagement.payroll_provider}}</li>
             {% if client_contacts %}
                     <li class="list-group-item"><strong>Client Contacts:</strong>
                         <ul class="list-group list-group-flush">

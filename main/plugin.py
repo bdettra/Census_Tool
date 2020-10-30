@@ -41,6 +41,14 @@ def excluded_check(participant):
         participant.eligible=False
         participant.save()
 
+def hours_worked_check(participant,eligibility_rules):
+    if participant.hours_worked >= eligibility_rules.service_hours:
+        return True
+    else:
+        return False
+
+
+
 def eligibility(participant, eligibility_rules, engagement):
     '''A function that determines if an employee is eligible or not'''
 
@@ -55,11 +63,11 @@ def eligibility(participant, eligibility_rules, engagement):
         #participant.eligible=False
 
     excluded_check(participant)    
-    #If the participant's age is over the eligiblity rules age through additional checks
+    #If the participant's age is over the eligiblity rules age go through additional checks
     if age > eligibility_rules.age:
 
         #If the participant's hours worked is greater than the eligiblity rules service hours then proceed with additional checks
-        if participant.hours_worked >= eligibility_rules.service_hours:
+        if hours_worked_check(participant,eligibility_rules):
 
             #If the participant was terminated and rehired make the participants "Start Day" equal to the DORH attribute
             if participant.DOT != None and participant.DORH != None:
@@ -326,44 +334,51 @@ def generate_selections(engagement):
 
 
 def generate_selections_version_2(engagement):
+
+    
+    '''Need to add handling for first year audits where population will be full census'''
     participants=models.participant.objects.filter(engagement=engagement)
     for i in participants:
         i.selection=False
         i.save()
 
-    population = models.participant.objects.filter(engagement=engagement)
+    if engagement.first_year==True:
+        population=models.participant.objects.filter(engagement=engagement)
+    else:
 
-    new_hires= models.participant.objects.filter(DOH__range=[engagement.date-relativedelta(years=1), engagement.date],engagement=engagement)
+        population = models.participant.objects.filter(engagement=engagement)
 
-    terminations = population.exclude(DOT=None)
+        new_hires= models.participant.objects.filter(DOH__range=[engagement.date-relativedelta(years=1), engagement.date],engagement=engagement)
+
+        terminations = population.exclude(DOT=None)
     
-    errors = models.participant.objects.filter(error__in=models.error.objects.filter(participant__in=population))
+        errors = models.participant.objects.filter(error__in=models.error.objects.filter(participant__in=population))
 
 
-    population = new_hires | terminations | errors
+        population = new_hires | terminations | errors
 
     sample_of_contributing=population.filter(contributing=True)
     sample_of_non_contributing=population.filter(contributing=False)
-    number_of_contributing = len(population.filter(contributing=True))
-    number_of_non_contributing = len(population.filter(contributing=False))
+    number_of_contributing = population.filter(contributing=True).count()
+    number_of_non_contributing = population.filter(contributing=False).count()
 
     if engagement.soc_1_reliance == False:
         if len(population) < 250:
-            number_of_selections=round(len(population)*.10)
-        elif len(population) > 250 and len(population) < 2500:
+            number_of_selections=round(population.count()*.10)
+        elif population.count() > 250 and population.count() < 2500:
             number_of_selections=25
-        elif len(population) > 2500 and len(population) < 5000:
+        elif population.count() > 2500 and population.count() < 5000:
             number_of_selections=45
-        elif len(population) > 5000:
+        elif population.count() > 5000:
             number_of_selections=60
     else:
-        if len(population) < 250:
+        if population.count() < 250:
             number_of_selections=round(population*.05)
-        elif len(population) > 250 and len(population) < 2500:
+        elif population.count() > 250 and population.count() < 2500:
             number_of_selections=12
-        elif len(population) > 2500 and len(population) < 5000:
+        elif population.count() > 2500 and population.count() < 5000:
             number_of_selections=23
-        elif len(population) > 5000:
+        elif population.count() > 5000:
             number_of_selections=30
 
     if number_of_non_contributing > number_of_contributing:
@@ -378,7 +393,6 @@ def generate_selections_version_2(engagement):
 
     for participant in contributing_selections:
         participant.selection=True
-        #selections_dict=participant.SSN
         participant.save()
 
     for participant in non_contributing_selections:
@@ -399,12 +413,21 @@ def previous_year_check(participant,py_engagement):
     error_dict={"First Name":False,"Last Name":False,"SSN":False,"DOB":False,
     "DOH":False,"DOT":False,"DORH":False}
     try:
-        py_data=py_participants.get(SSN__exact=participant.SSN)
+        if len(py_participant.filter(SSN__exact=pariticpant.SSN))>0:
+            try:
+                py_data=py_participants.get(SSN__exact=pariticpant.SSN,first_name=participant.first_name,last_name=pariticpant.last_name)
+            except:
+                py_data=py_participants.get(SSN__exact=participant.SSN)
+        else:
+            py_data=py_participants.get(SSN__exact=participant.SSN)
     except:
-        print("didnt work")
         return error_dict
 
+
+
+
     if py_data.first_name != participant.first_name:
+        print(str(py_data.first_name)+'---'+ str(participant.first_name))
         error_dict["First Name"]=(participant.first_name + ' ' +  participant.last_name +"'s" + ' first name changed from the previous year census. You should investigate further.')
         models.error.objects.create(participant=participant,error_message="First name data does not match previous year census")
     if py_data.last_name != participant.last_name:
@@ -420,9 +443,9 @@ def previous_year_check(participant,py_engagement):
     '''if py_data.DOT != participant.DOT:
         error_dict["DOT"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of termination changed from the previous year census. You should investigate further.')
         models.error.objects.create(participant=participant,error_message="DOT data does not match previous year census")'''
-    if py_data.DORH != participant.DORH and py_data.DORH!=None:
+    '''if py_data.DORH != participant.DORH and py_data.DORH!=None:
         error_dict["DORH"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of rehire changed from the previous year census. You should investigate further.')
-        models.error.objects.create(participant=participant,error_message="DORH data does not match previous year census")
+        models.error.objects.create(participant=participant,error_message="DORH data does not match previous year census")'''
 
     return error_dict
 

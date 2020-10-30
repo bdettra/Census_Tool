@@ -174,10 +174,15 @@ class NewEngagementForm(forms.ModelForm):
 
     class Meta:
         model=models.engagement
-        fields=('name','date','soc_1_reliance')
-        widgets={'name':forms.fields.TextInput(attrs={"placeholder":"Engagement Name",'class':'form-control'}),
+        fields=('name','date','soc_1_reliance',"first_year",'payroll_provider','tpa')
+        widgets={
+        'name':forms.fields.TextInput(attrs={"placeholder":"Engagement Name",'class':'form-control'}),
         'date':forms.fields.DateInput(attrs={"placeholder":"Engagement Date",'class':'form-control','id':'datepicker'}),
-        "soc_1_reliance":forms.CheckboxInput}
+        "first_year":forms.CheckboxInput,
+        "soc_1_reliance":forms.CheckboxInput,
+        "tpa":forms.fields.Select(attrs={"placeholder":"TPA",'class':'form-control'}),
+        "payroll_provider":forms.fields.Select(attrs={"placeholder":"Payroll Provider",'class':'form-control'}),
+        }
 
         
     def clean(self):
@@ -204,10 +209,15 @@ class EditEngagementForm(forms.ModelForm):
 
     class Meta:
         model=models.engagement
-        fields=('name','date','soc_1_reliance',)
-        widgets={'name':forms.fields.TextInput(attrs={'placeholder':'Engagement Name','class':'form-control'}),
+        fields=('name','date','soc_1_reliance','first_year',"tpa","payroll_provider")
+        widgets={
+        'name':forms.fields.TextInput(attrs={'placeholder':'Engagement Name','class':'form-control'}),
         'date':forms.fields.DateInput(attrs={"placeholder":"Engagement Date",'class':'form-control','id':'datepicker'}),
-        'soc_1_reliance':forms.CheckboxInput}
+        "first_year":forms.CheckboxInput,
+        'soc_1_reliance':forms.CheckboxInput,
+        "tpa":forms.fields.Select(attrs={"placeholder":"TPA",'class':'form-control'}),
+        "payroll_provider":forms.fields.Select(attrs={"placeholder":"Payroll Provider",'class':'form-control'}), 
+        }
 
 
     def clean(self):
@@ -229,6 +239,9 @@ class EditEngagementForm(forms.ModelForm):
         name=self.cleaned_data.get("name")
         date=self.cleaned_data.get("date")
         soc_1_reliance=self.cleaned_data.get("soc_1_reliance")
+        first_year=self.cleaned_data.get("first_year")
+        tpa=self.cleaned_data.get('tpa')
+        payroll_provider=self.cleaned_data.get("payroll_provider")
         slug=slugify(name)
 
         #Updating the existing client in the database.
@@ -237,6 +250,9 @@ class EditEngagementForm(forms.ModelForm):
         instance.date=date
         instance.slug=slug
         instance.soc_1_reliance= soc_1_reliance
+        instance.tpa=tpa
+        instance.payroll_provider=payroll_provider
+        instance.first_year=first_year
         instance.save()
 
 class EligibilityForm(forms.ModelForm):

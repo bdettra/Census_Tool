@@ -36,6 +36,31 @@
                 </div>
             </div>
         </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="client_name" class="col-md-2 control-label">First Year?</label>
+                <div class="col-md-10">
+                    {{form.first_year}}
+                </div>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="client_name" class="col-md-2 control-label">TPA</label>
+                <div class="col-md-10">
+                    {{form.tpa}}
+                </div>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="client_name" class="col-md-2 control-label">Payroll Provider</label>
+                <div class="col-md-10">
+                    {{form.payroll_provider}}
+                </div>
+            </div>
+        </div>
+
         {% if form.errors %}
         {% for field in form %}
             {% for error in field.errors %}
