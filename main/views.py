@@ -199,7 +199,7 @@ class CreateEngagement(LoginRequiredMixin,TemplateView):
     def get(self,request, slug, *args,**kwargs):
         data=dict()
         client_object=models.client.objects.get(slug=slug)
-        new_engagement_form=forms.NewEngagementForm(client=client_object)
+        new_engagement_form=forms.NewEngagementForm(client=client_object,user=request.user)
         context_object={'form':new_engagement_form, "client":client_object}
         print(new_engagement_form)
         data['html_form']=render_to_string('new_engagement.html',context_object,request=request)
@@ -208,31 +208,22 @@ class CreateEngagement(LoginRequiredMixin,TemplateView):
     def post(self,request,slug,*args,**kwargs):
         data=dict()
         client_object=models.client.objects.get(slug=slug)
-        form=forms.NewEngagementForm(client_object,request.POST)
+        form=forms.NewEngagementForm(client_object,request.user,request.POST)
         data['form_is_valid']=False
         if form.is_valid():
-            name=request.POST.get('name')
-            date=request.POST.get('date')
-            #Creating a regular expression pattern in order to get the date in the correct format.
-            date_pattern=re.compile("[0-9][0-9]-[0-9][0-9]-[0-9][0-9][0-9][0-9]")
-
-            if date_pattern.match(date):
-                pass
-            else:
-                date=(date[-4:]+"-"+date[0:2]+"-"+date[3:5])
-        
 
             #Determining if there is a previous engagement with eligiblity rules to rollforward
             #and then getting that ruleset.
             previous_engagements= client_object.engagement_set.all()
             if previous_engagements:
                 most_recent_engagement=client_object.engagement_set.latest('date')
-                most_recent_eligibility_rules=most_recent_engagement.eligibility_rules_set.get()
+                most_recent_deferral_rules=most_recent_engagement.eligiblity_rules_set.get(match_type='Deferral')
+                most_recent_match_rules=most_recent_engagement.eligiblity_rules_set.get(match_type='Match')
+                most_recent_ps_rules=most_recent_engagement.eligiblity_rules_set.get(match_type='Profit Sharing')
 
-            #Slugify the name data and then create a new engagement.
-            slug_name=slugify(name) 
-            primary_user=request.user
-            instance=models.engagement.objects.create(name=name,date=date,slug=slug_name, client=client_object,primary_user=primary_user)
+
+            instance = form.save()
+
             data['form_is_valid']=True
 
             #Getting all engagements under this client.
@@ -241,18 +232,46 @@ class CreateEngagement(LoginRequiredMixin,TemplateView):
             #Rolling forward previous eligiblity rules or creating ruleset for new client
             #with new engagements.
             if previous_engagements:
-                models.eligibility_rules.objects.create(engagement=instance, age=most_recent_eligibility_rules.age, service_hours=most_recent_eligibility_rules.service_hours,
-                service_days=most_recent_eligibility_rules.service_days, service_months= most_recent_eligibility_rules.service_months,
-                service_years=most_recent_eligibility_rules.service_years, excluded_employees=most_recent_eligibility_rules.excluded_employees,
-                entry_date=most_recent_eligibility_rules.entry_date,)
+                models.eligibility_rules.objects.create(
+                engagement=instance,
+                match_type="Deferral",
+                age=most_recent_deferral_rules.age,
+                service_hours=most_recent_deferral_rules.service_hours,
+                service_days=most_recent_deferral_rules.service_days,
+                service_months= most_recent_deferral_rules.service_months,
+                service_years=most_recent_deferral_rules.service_years,
+                excluded_employees=most_recent_deferral_rules.excluded_employees,
+                entry_date=most_recent_deferral_rules.entry_date,)
+
+                models.eligibility_rules.objects.create(
+                engagement=instance,
+                match_type="Match",
+                age=most_recent_match_rules.age,
+                service_hours=most_recent_match_rules.service_hours,
+                service_days=most_recent_match_rules.service_days,
+                service_months= most_recent_match_rules.service_months,
+                service_years=most_recent_match_rules.service_years,
+                excluded_employees=most_recent_match_rules.excluded_employees,
+                entry_date=most_recent_match_rules.entry_date,)
+
+                models.eligibility_rules.objects.create(
+                engagement=instance,
+                match_type="Profit Sharing",
+                age=most_recent_ps_rules.age,
+                service_hours=most_recent_ps_rules.service_hours,
+                service_days=most_recent_ps_rules.service_days,
+                service_months= most_recent_ps_rules.service_months,
+                service_years=most_recent_ps_rules.service_years,
+                excluded_employees=most_recent_ps_rules.excluded_employees,
+                entry_date=most_recent_ps_rules.entry_date,)
             else:
-                models.eligibility_rules.objects.create(engagement=instance)
+                models.eligibility_rules.objects.create(engagement=instance,match_type="Deferral")
+                models.eligibility_rules.objects.create(engagement=instance,match_type="Match")
+                models.eligibility_rules.objects.create(engagement=instance,match_type="Profit Sharing")
         else:
             engagements=models.engagement.objects.filter(client=client_object)
         
         context={"engagements":engagements,"client":client_object,"form":form}
-
-        #data['engagements']=render_to_string('engagement_list.html',{'engagements':context['engagements'], 'client': context['client']},request=request)
         
         data['html_form']=render_to_string('new_engagement.html',context,request=request)
 
@@ -392,10 +411,10 @@ class EngagementView(UserPassesTestMixin, TemplateView):
 
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
-        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
         participants = models.participant.objects.filter(engagement=engagement)
         census_form=forms.CensusFileForm()
-
+        print(eligibility_rules)
         errors=False
         for participant in participants:
             if len(participant.error_set.all())>0:
@@ -408,8 +427,8 @@ class EngagementView(UserPassesTestMixin, TemplateView):
         
 
 
-class EditEligibility(UserPassesTestMixin, TemplateView):
-    template_name="edit_eligibility.html"
+class EditDeferralEligibility(UserPassesTestMixin, TemplateView):
+    template_name="edit_deferral.html"
 
     def test_func(self):
         user = self.request.user
@@ -428,24 +447,28 @@ class EditEligibility(UserPassesTestMixin, TemplateView):
         data=dict()
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
-        eligiblity_rules=models.eligibility_rules.objects.get(engagement=engagement)
-        edit_eligibility_form=forms.EligibilityForm(instance=eligiblity_rules)
-        context_object={'form':edit_eligibility_form, "client":client, "engagement":engagement}
-        data['html_form']=render_to_string('edit_eligibility.html',context_object,request=request)
+        eligiblity_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        edit_eligibility_form=forms.EligibilityForm(instance=eligiblity_rules.get(match_type="Deferral"))
+        header="Deferral"
+        namespace='edit_deferral'
+        context_object={"namespace":namespace,"header":header,'form':edit_eligibility_form, "client":client, "engagement":engagement}
+        data['html_form']=render_to_string('edit_deferral.html',context_object,request=request)
         return JsonResponse(data)
 
     def post(self,request,slug, Eslug,*args,**kwargs):
         data=dict()
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
-
-        form=forms.EligibilityForm(request.POST)
+        eligiblity_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        form=forms.EligibilityForm(request.POST,instance=eligiblity_rules.get(match_type="Deferral"))
 
         if form.is_valid():
             form.save(engagement)
+        else:
+            print('Form not Valid')
         
         client=models.client.objects.get(slug=slug)
-        eligibility_rules=get_object_or_404(models.eligibility_rules,engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement,match_type="Deferral")
         
         participants=models.participant.objects.filter(engagement=engagement)
         
@@ -475,14 +498,177 @@ class EditEligibility(UserPassesTestMixin, TemplateView):
         
         participants=models.participant.objects.filter(engagement=engagement)
 
+        header="Deferral"
+        
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        context={"header":header,"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
 
+        data['engagements']=render_to_string('eligibility_rules.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"],},request=request)
+        
+        data['form_is_valid']=True
+        data['html_form']=render_to_string('edit_deferral.html',context,request=request)
+        
+        return JsonResponse(data)
 
-        context={"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
+class EditMatchEligibility(UserPassesTestMixin, TemplateView):
+    template_name="edit_match.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
+
+    def get(self,request, slug, Eslug, *args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        eligiblity_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        edit_eligibility_form=forms.EligibilityForm(instance=eligiblity_rules.get(match_type="Match"))
+        header="Match"
+        context_object={"header":header,'form':edit_eligibility_form, "client":client, "engagement":engagement}
+        data['html_form']=render_to_string('edit_match.html',context_object,request=request)
+        return JsonResponse(data)
+
+    def post(self,request,slug, Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        form=forms.EligibilityForm(request.POST,instance=eligibility_rules.get(match_type="Match"))
+
+        if form.is_valid():
+            form.save(engagement)
+        else:
+            print('Form Not Valid')
+        client=models.client.objects.get(slug=slug)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement,match_type="Match")
+        
+        participants=models.participant.objects.filter(engagement=engagement)
+        
+        if len(participants)>0:
+        
+            for participant in participants:
+                plugin.eligibility(participant,eligibility_rules,engagement)
+                plugin.participating(participant)
+                plugin.effective_deferral(participant)
+                
+        
+
+        
+                participant.save()
+                if participant.eligible == False and participant.participating==True:
+                    if participant.DOT!=None:
+                        if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
+                            pass
+                        else:
+                            messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+
+                    else:
+                        messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+
+                if participant.excluded == True and participant.participating == True:
+                    messages.error(self.request, participant.first_name + " " + participant.last_name + " " + " is an excluded employee who is participating. You should investigate further.")
+        
+        participants=models.participant.objects.filter(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        header="Match"
+       
+
+        context={"header":header,"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
 
         data['engagements']=render_to_string('eligibility_rules.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
         
         data['form_is_valid']=True
-        data['html_form']=render_to_string('edit_eligibility.html',context,request=request)
+        data['html_form']=render_to_string('edit_match.html',context,request=request)
+        
+        return JsonResponse(data)
+
+class EditPSEligibility(UserPassesTestMixin, TemplateView):
+    template_name="edit_profit_share.html"
+
+    def test_func(self):
+        user = self.request.user
+        
+        client_slug = self.kwargs.pop("slug")
+        client = models.client.objects.get(slug=client_slug)
+
+        if client in user.client_set.all():
+            test=True
+        else:
+            test=False
+        
+        return test
+
+    def get(self,request, slug, Eslug, *args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        eligiblity_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        edit_eligibility_form=forms.EligibilityForm(instance=eligiblity_rules.get(match_type="Profit Sharing"))
+        header="Profit Sharing"
+        context_object={'header':header,'form':edit_eligibility_form, "client":client, "engagement":engagement}
+        data['html_form']=render_to_string('edit_ps.html',context_object,request=request)
+        return JsonResponse(data)
+
+    def post(self,request,slug, Eslug,*args,**kwargs):
+        data=dict()
+        client=models.client.objects.get(slug=slug)
+        engagement=models.engagement.objects.get(slug=Eslug,client=client)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+
+        form=forms.EligibilityForm(request.POST,instance=eligibility_rules.get(match_type="Profit Sharing"))
+
+        if form.is_valid():
+            form.save(engagement)
+        
+        client=models.client.objects.get(slug=slug)
+        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement,match_type="Profit Sharing")
+        
+        participants=models.participant.objects.filter(engagement=engagement)
+        
+        if len(participants)>0:
+        
+            for participant in participants:
+                plugin.eligibility(participant,eligibility_rules,engagement)
+                plugin.participating(participant)
+                plugin.effective_deferral(participant)
+                
+        
+
+        
+                participant.save()
+                if participant.eligible == False and participant.participating==True:
+                    if participant.DOT!=None:
+                        if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
+                            pass
+                        else:
+                            messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+
+                    else:
+                        messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+
+                if participant.excluded == True and participant.participating == True:
+                    messages.error(self.request, participant.first_name + " " + participant.last_name + " " + " is an excluded employee who is participating. You should investigate further.")
+        
+        participants=models.participant.objects.filter(engagement=engagement)
+
+        header = "Profit Sharing"
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+
+        context={"header":header,"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
+
+        data['engagements']=render_to_string('eligibility_rules.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"]},request=request)
+        
+        data['form_is_valid']=True
+        data['html_form']=render_to_string('edit_ps.html',context,request=request)
         
         return JsonResponse(data)
 
@@ -864,7 +1050,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         #Defining our client, engagement, eligiblity rules, census forms and participants objects
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
-        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
         form=forms.CensusFileForm(request.POST, request.FILES)
         participants=models.participant.objects.filter(engagement=engagement)
 
@@ -899,8 +1085,6 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             messages.error(self.request,"The file that imported is not in excel format")
             return render(request,"engagement_page.html",context=context)
         
-
-        print(data)
         #Creating a columns variable from our dataset 
         columns=data.columns
         location_dict=plugin.location_dict(columns)
@@ -993,7 +1177,6 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             if pd.isnull(data.iloc[i,location_dict['DOB']])==False:
                 try:
                     data.iloc[i,location_dict['DOB']]=pd.to_datetime(data.iloc[i,location_dict['DOB']],)
-                    print(data.iloc[i,location_dict['DOB']])
                 except  Exception as e:
                     messages.error(self.request,"There is an invalid data point in the DOB column at row " + str(i+1) +"." + str(e))
                     return render(request,"engagement_page.html",context=context)
@@ -1199,8 +1382,8 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             participant.key_employee=False
             participant.save()
 
-
-            plugin.eligibility(participant,eligibility_rules,engagement)
+            for rule in eligibility_rules:
+                plugin.eligibility(participant,rule,engagement)
             plugin.participating(participant)
             plugin.effective_deferral(participant)
             
@@ -1221,18 +1404,18 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 
             participant.save()
-            if participant.eligible == False and participant.participating==True:
+            if participant.deferral_eligible == False and participant.participating==True:
                 if participant.DOT!=None:
                     if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
                         pass
                     else:
-                        models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
+                        models.error.objects.create(participant=participant,error_message="Employee is not eligible for employee deferrals.")
                         participant.save()
                         #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
 
                 else:
                     models.error.objects.create(participant=participant,error_message="Employee is ineligible and is participating")
-                    #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "is a ineligible employee who is participating. You should investigate further.")
+
 
             if participant.excluded == True and participant.participating == True:
                 messages.error(self.request, participant.first_name + " " + participant.last_name + " " + " is an excluded employee who is participating. You should investigate further.")

@@ -15,6 +15,7 @@ from django.core.mail import send_mail
 from bootstrap_modal_forms.forms import BSModalForm
 import pandas as pd
 from django.utils.text import slugify
+import re
 
 '''class AuthenticationForm(forms.Form):
     """Authentication form which uses boostrap CSS."""
@@ -168,8 +169,9 @@ class EditClientUserForm(forms.ModelForm):
 
 class NewEngagementForm(forms.ModelForm):
 
-    def __init__(self,client,*args,**kwargs):
+    def __init__(self,client,user,*args,**kwargs):
         self.client=client
+        self.user=user
         super().__init__(*args,**kwargs)
 
     class Meta:
@@ -200,6 +202,35 @@ class NewEngagementForm(forms.ModelForm):
         
     def get_user(self):
         return self.user
+
+    def save(self):
+        name=self.cleaned_data.get("name")
+        date=self.cleaned_data.get("date")
+        slug=slugify(name)
+        soc_1_reliance=self.cleaned_data.get("soc_1_reliance")
+        first_year = self.cleaned_data.get("first_year")
+        tpa=self.cleaned_data.get("tpa")
+        payroll_provider = self.cleaned_data.get("payroll_provider")
+        client=self.client
+    
+
+        instance=models.engagement.objects.create(
+            name=name,
+            date=date,
+            slug=slug,
+            soc_1_reliance=soc_1_reliance,
+            primary_user=self.user,
+            first_year=first_year,
+            tpa=tpa,
+            payroll_provider=payroll_provider,
+            client=client,
+        )
+        instance.save()
+
+        return instance
+
+
+
 
 class EditEngagementForm(forms.ModelForm):
 
@@ -265,7 +296,8 @@ class EligibilityForm(forms.ModelForm):
         fields=("age","service_hours","service_days","service_months","service_years",
         "excluded_employees","entry_date",)
 
-        widgets={'age':forms.fields.NumberInput(attrs={"placeholder":"Enter Age",'class':'form-control'}),
+        widgets={
+        'age':forms.fields.NumberInput(attrs={"placeholder":"Enter Age",'class':'form-control'}),
         'service_hours':forms.fields.NumberInput(attrs={"placeholder":"Enter Service Hours",'class':'form-control'}),
         'service_days':forms.fields.NumberInput(attrs={"placeholder":"Enter Service Days",'class':'form-control'}),
         'service_months':forms.fields.NumberInput(attrs={"placeholder":"Enter Service Months",'class':'form-control'}),
@@ -275,36 +307,17 @@ class EligibilityForm(forms.ModelForm):
         }
 
     def clean(self):
-        data=[]
-
-        #Getting the age, service hours, service days, service months, service years, excluded employees and entry date data
-        #from the form and appending it to the data list.
-        age=self.cleaned_data.get("age")
-        data.append(age)
-
-        service_hours=self.cleaned_data.get("service_hours")
-        data.append(service_hours)
-
-        service_days=self.cleaned_data.get("service_days")
-        data.append(service_days)
-
-        service_months=self.cleaned_data.get("service_months")
-        data.append(service_months)
-
-        service_years=self.cleaned_data.get("service_years")
-        data.append(service_years)
-        
-        excluded_employees=self.cleaned_data.get("excluded_employees")
-
-        entry_date=self.cleaned_data.get("entry_date")
-
-        #Iterating through the data list and perorming data validation on each of the form attributes.
-        for value in data:
+    
+        for key, value in self.cleaned_data.items():
             if value is None:
-                value=0
-            if value < 0:
+                self.cleaned_data[key]=0
+            if type(value)=='int' and value < 0:
                 raise forms.ValidationError("Values must be greater than 0.")
+        
 
+        
+
+        print(self.cleaned_data)
         return self.cleaned_data
 
     
@@ -316,6 +329,9 @@ class EligibilityForm(forms.ModelForm):
 
         #Getting the age, service hours, service days, service months, service years, excluded employees and entry date data
         #from the form and appending it to the data list.
+        match_type = self.instance.match_type
+        print(match_type)
+
         age=self.cleaned_data.get("age")
         data.append(age)
 
@@ -343,7 +359,7 @@ class EligibilityForm(forms.ModelForm):
                 
         
         #Either finding the existing eligiblity rules object in the database or creating a new eligilbity rules object in the database.
-        eligibility_rules,created=models.eligibility_rules.objects.get_or_create(engagement=engagement)
+        eligibility_rules=self.instance
         eligibility_rules.age=data[0]
         eligibility_rules.service_hours=data[1]
         eligibility_rules.service_days=data[2]
@@ -352,6 +368,7 @@ class EligibilityForm(forms.ModelForm):
         eligibility_rules.entry_date=entry_date
         eligibility_rules.excluded_employees=excluded_employees
         eligibility_rules.save()
+        
     
 
 class CensusFileForm(forms.Form):

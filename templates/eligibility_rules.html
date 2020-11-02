@@ -1,9 +1,54 @@
-<ul class="list-group list-group-flush">
-  <li class="list-group-item">Age: {{eligibility_rules.age}}</li>
-  <li class="list-group-item">Service Hours: {{eligibility_rules.service_hours}}</li>
-  <li class="list-group-item">Service Days: {{eligibility_rules.service_days}}</li>
-  <li class="list-group-item">Service Months: {{eligibility_rules.service_months}}</li>
-  <li class="list-group-item">Service Years: {{eligibility_rules.service_years}}</li>
-  <li class="list-group-item">Excluded Employees: {{eligibility_rules.excluded_employees}}</li>
-  <li class="list-group-item">Entry Date: {{eligibility_rules.entry_date}}</li>
-</ul>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col"></th>
+      <th scope="col">Deferral</th>
+      <th scope="col">Match</th>
+      <th scope="col">Profit Share</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <th scope="row">Age:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.age}}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <th scope="row">Service Hours:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.service_hours}}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <th scope="row">Service Days:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.service_days}}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <th scope="row">Service Months:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.service_months}}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <th scope="row">Service Years:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.service_years}}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <th scope="row">Excluded Employees:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.excluded_employees}}</td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <th scope="row">Entry Date:</th>
+        {% for rule in eligibility_rules %}
+          <td>{{rule.entry_date}}</td>
+        {% endfor %}
+      </tr>
+  </tbody>
+</table>

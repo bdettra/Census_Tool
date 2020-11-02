@@ -14,6 +14,9 @@ class client(models.Model):
 
     primary_user = models.ForeignKey(get_user_model(),on_delete=models.CASCADE, related_name="primary_client_user")
 
+    def __str__(self):
+        return self.name
+
 class engagement(models.Model):
     PAYROLL=(
         ("Paylocity","Paylocity"),
@@ -39,12 +42,21 @@ class engagement(models.Model):
     payroll_provider = models.CharField(choices=PAYROLL,max_length=50)
     tpa=models.CharField(choices=TPA,max_length=50)
 
+    def __str__(self):
+        return self.name
+
 class eligibility_rules(models.Model):
     CHOICES=(
         ("Immediately","Immediately"),
         ("First day of following Month", "First day of following month"),
         ("Semi Annual (Jan 1 or July 1)", "Semi Annual (Jan 1 or July 1)"),
         ("Annual (Jan 1)","Annual (Jan 1)"),
+    )
+
+    MATCH_TYPE=(
+        ('Deferral','Deferral'),
+        ('Match','Match'),
+        ('Profit Sharing','Profit Sharing')
     )
 
     age=models.IntegerField(null=True,blank=True)
@@ -54,8 +66,9 @@ class eligibility_rules(models.Model):
     service_years=models.IntegerField(null=True,blank=True)
     excluded_employees=models.TextField(blank=True, null=True)
     entry_date=models.CharField(choices=CHOICES,max_length=50,default="Immediately")
+    match_type=models.CharField(choices=MATCH_TYPE,max_length=50,default='Deferral')
     engagement=models.ForeignKey(engagement,on_delete=models.CASCADE)
-    
+  
 
 class participant(models.Model):
     objects=RandomManager()
@@ -82,7 +95,9 @@ class participant(models.Model):
     effective_deferral_percentage=models.FloatField(blank=True,null=True)
     selection=models.BooleanField(blank=True,null=True)
     key_employee=models.BooleanField(blank=True,null=True)
-    eligible=models.BooleanField(blank=True,null=True)
+    deferral_eligible=models.BooleanField(blank=True,null=True)
+    match_eligible=models.BooleanField(blank=True,null=True)
+    profit_share_eligible=models.BooleanField(blank=True,null=True)
     participating=models.BooleanField(blank=True,null=True)
     contributing=models.BooleanField(blank=True,null=True)
     engagement=models.ForeignKey(engagement,on_delete=models.CASCADE)

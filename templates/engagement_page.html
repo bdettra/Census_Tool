@@ -35,7 +35,10 @@
                 <span class="caret"></span>
             </button>
             <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1">
-                <li role="presentation"><a class="dropdown-item show-form" data-url="{% url 'edit_eligibility' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Edit Eligibility</a></li>
+                <li role="presentation"><a class="dropdown-item show-form" data-url="{% url 'edit_deferral' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Edit Deferral Eligibility</a></li>
+                <li role="presentation"><a class="dropdown-item show-form" data-url="{% url 'edit_match' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Edit Match Eligibility</a></li>
+                <li role="presentation"><a class="dropdown-item show-form" data-url="{% url 'edit_profit_share' client.slug engagement.slug %}" role="menuitem" tabindex="-1">Edit PS Eligibility</a></li>
+                
                 <li role="presentation"><a data-toggle="modal" data-target="#fm-modal-grid" role="menuitem" tabindex="-1">View Eligibility</a></li>
             </ul>
         </div>
@@ -90,7 +93,9 @@
                         <th style="width:50%">Effective Deferral</th>
                         <th style="width:50%">Selection</th>
                         <th style="width:50%">Key Employee</th>
-                        <th style="width:50%">Eligible</th>
+                        <th style="width:50%">Deferral Eligible</th>
+                        <th style="width:50%">Match Eligible</th>
+                        <th style="width:50%">PS Eligible</th>
                         <th style="width:50%">Participating</th>
                     </thead>
                     <tbody>
@@ -100,7 +105,7 @@
 
 
 <div class="modal fade" id="modal-eligibility_rules">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content"></div>
     </div>
 </div>
@@ -330,6 +335,8 @@
                         $('td:eq(21)',row).css('background-color','#ffff80');
                         $('td:eq(22)',row).css('background-color','#ffff80');
                         $('td:eq(23)',row).css('background-color','#ffff80');
+                        $('td:eq(24)',row).css('background-color','#ffff80');
+                        $('td:eq(25)',row).css('background-color','#ffff80');
 
                         var error;
                         for (error of data.error_set){
@@ -571,7 +578,27 @@
                         }
                     
                     }},
-                    {"data":"eligible",
+                    {"data":"deferral_eligible",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red; text-align:center;">'
+                        }
+                    
+                    }},
+                    {"data":"match_eligible",
+                    "render":function(data,type,row){
+                        if (data ==true){
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'
+                        }
+                        else {
+                            return '<i class="fa fa-check" aria-hidden="true" style="color:red; text-align:center;">'
+                        }
+                    
+                    }},
+                    {"data":"profit_share_eligible",
                     "render":function(data,type,row){
                         if (data ==true){
                             return '<i class="fa fa-check" aria-hidden="true" style="color:green; text-align:center;">'

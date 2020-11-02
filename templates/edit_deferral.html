@@ -1,0 +1,102 @@
+{% block content %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+ 
+<form method="post" data-url="{% url 'edit_deferral' client.slug engagement.slug %}" action="{% url 'edit_deferral' client.slug engagement.slug %}" class="eligibility-form">
+
+    {% csrf_token %}
+
+    <div class="modal-header">
+        <h5 class="modal-title">Edit {{header}} Rules</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="client_name" class="col-md-2 control-label">Age</label>
+            <div class="col-md-10">
+                {{form.age}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="client_number" class="col-md-2 control-label">Service Hours</label>
+            <div class="col-md-10">
+                {{form.service_hours}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="client_name" class="col-md-2 control-label">Service Days</label>
+            <div class="col-md-10">
+                {{form.service_days}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="client_name" class="col-md-2 control-label">Service Months</label>
+            <div class="col-md-10">
+                {{form.service_months}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="client_name" class="col-md-2 control-label">Service Years</label>
+            <div class="col-md-10">
+                {{form.service_years}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label for="client_name" class="col-md-2 control-label">Excluded Employees</label>
+            <div class="col-md-10">
+                {{form.excluded_employees}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body" style="padding-top: 50px;">
+        <div class="form-group">
+            <label for="client_name" class="col-md-2 control-label">Entry Date</label>
+            <div class="col-md-10">
+                {{form.entry_date}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-body">
+    {% if form.errors %}
+    {% for field in form %}
+        {% for error in field.errors %}
+            <div class="alert alert-danger">
+                <strong>{{ error|escape }}</strong>
+            </div>
+        {% endfor %}
+    {% endfor %}
+    {% for error in form.non_field_errors %}
+    <p class="validation-summary-errors">{{error | escape}}</p>
+    {% endfor %}
+{% endif %}
+        <div class="ajaxProgress">
+            <h3>Editing Eligibility Rules</h3>
+            <img src="{% static 'images/ajax-loader.gif' %}" alt="loading"/>
+        </div>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+
+    </div>
+
+
+</form>
+
+
+{% endblock content %}

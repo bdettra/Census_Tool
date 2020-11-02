@@ -10,12 +10,12 @@ from . import views
 
 class EligibilityRules(admin.ModelAdmin):
     model=models.eligibility_rules
-    list_display=("age","service_hours","service_days","service_months",
+    list_display=("match_type","age","service_hours","service_days","service_months",
     "service_years","excluded_employees","entry_date","engagement",)
 
 class EngagementAdmin(admin.ModelAdmin):
     model=models.engagement
-    list_display=("name","date","client","soc_1_reliance",)
+    list_display=("name","date","client","soc_1_reliance",'first_year','tpa','payroll_provider')
 
 class ClientAdmin(admin.ModelAdmin):
     model=models.client
@@ -26,8 +26,8 @@ class ParticipantAdmin(admin.ModelAdmin):
     list_display=("first_name","last_name","SSN","DOB","DOH","DOT","DORH","excluded",
     "gross_wages","eligible_wages","hours_worked","EE_pre_tax_amount","ER_pre_tax_amount",
     "EE_roth_amount","ER_roth_amount","EE_catch_up","ER_catch_up",
-    "effective_deferral_percentage","selection","key_employee","eligible",
-    "participating","engagement","id",)
+    "effective_deferral_percentage","selection","key_employee","deferral_eligible",
+    "match_eligible","profit_share_eligible","participating","engagement","id",)
 
 class ClientContactAdmin(admin.ModelAdmin):
     models=models.client_contact

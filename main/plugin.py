@@ -56,7 +56,12 @@ def eligibility(participant, eligibility_rules, engagement):
     age = engagement.date - participant.DOB
     age=((age.days)/365) 
     #Making each participant's eligible attribute as False to start with.
-    participant.eligible=False
+    if eligibility_rules.match_type=="Deferral":
+        participant.deferral_eligible=False
+    elif eligibility_rules.match_type=="Match":
+        participant.match_eligible=False
+    elif eligibility_rules.match_type=="Profit Sharing":
+        participant.profit_share_eligible=False
 
     #If the participant is excluded make the participant's eligiblity attribute False
     #if participant.excluded == True:
@@ -151,10 +156,23 @@ def eligibility(participant, eligibility_rules, engagement):
             #If the eligible variable is still true that means the entry date had to have been in the current engagement year
             #therefore we are setting the partiicipants eligible attribute to ture if the eligible variable is true
             #and false if the eligible variable is false.
-            if eligible == True:
-                participant.eligible=True
-            else:
-                participant.eligible=False
+            
+            
+            if eligibility_rules.match_type=='Deferral':
+                if eligible == True:
+                    participant.deferral_eligible=True
+                else:
+                    participant.deferral_eligible=False
+            elif eligibility_rules.match_type=='Match':
+                if eligible == True:
+                    participant.match_eligible=True
+                else:
+                    participant.match_eligible=False
+            elif eligibility_rules.match_type=='Profit Sharing':
+                if eligible == True:
+                    participant.profit_share_eligible=True
+                else:
+                    participant.profit_share_eligible=False
                 
 
     return participant.eligible
