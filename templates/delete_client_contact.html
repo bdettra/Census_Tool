@@ -23,7 +23,7 @@
                 <li class="list-group-item">{% for field in form %}{% render_field field %}{% endfor %} {{form.instance.first_name}} {{form.instance.last_name}} - {{form.instance.position}} - {{form.instance.email}}</li>
                 {% endfor %}
             {% else %}
-                <p>There are no errors in the census</p>
+                <p>There are no client contacts saved.</p>
             {% endif %}
           </ul>
     </div>
