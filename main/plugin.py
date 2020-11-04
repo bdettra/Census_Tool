@@ -6,6 +6,8 @@ from django_random_queryset import RandomManager
 import re
 
 def location_dict(columns):
+
+    #This is a dictionary of acceptable column headers that match that column to the data type that will be imported into our participant model
     column_dict={"First Name":["First Name", "First","FNAME","fname"],"Last Name":["Last Name", "Last","LNAME","lname"],"SSN":["Social","SSN"],
              "DOB":["Date of B","DOB","Birthdate","Birth Date"],"DOH":["Date of H", "DOH", "Hire Date","hire date","Original Hire Date"],"DOT":["Date of Te","DOT"],"DORH":["Date of Re","DORH"],
              "Excluded":["Excluded Em","Excluded"],"Hours Worked":["Hours Worked","Hours"],"Gross Wages":["Gross Wa", "Gross Wages", "Gross Comp","GROSS WAGES" "Gross Compensation"],
@@ -17,7 +19,12 @@ def location_dict(columns):
             "EE Catch-up":["Employee Catch-Up","employee catch-up","EE Catch-up","EE Catch-Up","ee catch-up","EE catch-up"],
             "ER Catch-up":["Employer Catch-Up","employer catch-up","ER Catch-up","ER Catch-Up","er catch-up", "ER catch-up","ER Catch-UP"]}
     
+    #Creating a location dictionary that knows where each of the participant attributes are in the uploaded excel file
     location_dict=dict()
+
+    #Iterating through the column dictionary from above and using Python regular expressions in order to match one of the 
+    #values with a header value in the uploaded excel file. Once found this alogrithm assigns the location of that specific attribute 
+    #a value that corresponds with where it is at in the excel file.
     for key, value in column_dict.items():
         found=False
         for v in value:
@@ -35,95 +42,54 @@ def location_dict(columns):
     return location_dict
 
 
+#Function that determines if a participant is excluded and then properly makes that participant not eligible.
+def excluded_check(participant,prelim_rules):
+    if participant.excluded==False:
+        prelim_rules['Excluded_Employees']=True
+    
+    return prelim_rules
 
-def excluded_check(participant):
-    if participant.excluded==True:
-        participant.eligible=False
-        participant.save()
-
-def hours_worked_check(participant,eligibility_rules):
+def hours_worked_check(participant,eligibility_rules,prelim_rules):
     if participant.hours_worked >= eligibility_rules.service_hours:
-        return True
-    else:
-        return False
+        prelim_rules['Service_Hours']=True
+    
+    return prelim_rules
 
-
-
-def eligibility(participant, eligibility_rules, engagement):
-    '''A function that determines if an employee is eligible or not'''
-
+def age_check(participant,eligiblity_rules,prelim_rules,engagement):
     year_end = engagement.date
     age = engagement.date - participant.DOB
     age=((age.days)/365) 
-    #Making each participant's eligible attribute as False to start with.
-    if eligibility_rules.match_type=="Deferral":
-        participant.deferral_eligible=False
-    elif eligibility_rules.match_type=="Match":
-        participant.match_eligible=False
-    elif eligibility_rules.match_type=="Profit Sharing":
-        participant.profit_share_eligible=False
 
-    #If the participant is excluded make the participant's eligiblity attribute False
-    #if participant.excluded == True:
-        #participant.eligible=False
+    if age>eligiblity_rules.age:
+        prelim_rules['Age']=True
+    
+    return prelim_rules
 
-    excluded_check(participant)    
-    #If the participant's age is over the eligiblity rules age go through additional checks
-    if age > eligibility_rules.age:
+def calculate_start_date(participant):
+    #If the participant was terminated and rehired make the participants "Start Day" equal to the DORH attribute
+    if participant.DORH !=None:
+        start_day = participant.DORH
 
-        #If the participant's hours worked is greater than the eligiblity rules service hours then proceed with additional checks
-        if hours_worked_check(participant,eligibility_rules):
+    if participant.DOT != None and participant.DORH != None:
+        start_day = participant.DORH
 
-            #If the participant was terminated and rehired make the participants "Start Day" equal to the DORH attribute
-            if participant.DOT != None and participant.DORH != None:
-                start_day = participant.DORH
+    #If the participant was not terminated then make the participants "Start Day" equal to the DOH attribute
+    if participant.DOT == None or (participant.DOT != None and participant.DORH == None) :
+        start_day = participant.DOH
+    
+    return start_day
 
-            #If the participant was not terminated then make the participants "Start Day" equal to the DOH attribute
-            elif participant.DOT == None:
-                start_day = participant.DOH
-            
-            #If the participant was terminated and was never re-hired make the participants eligiblity attribute False
-            elif participant.DOT != None and participant.DORH == None:
-                participant.eligiblity=False
 
-            #If the participant does not have a DORH attribute make the participants "Start Day" the participant's DOH attribute
-            #else if the participant does have a DORH make that the employees "Start Day"
-            if participant.DORH == None:
-                start_day = participant.DOH
-            else:
-                start_day = participant.DORH
+def calculate_entry_dates(participant,eligibility_rules,entry_dates,eligible_dates):
+    #Iterating through the entry dates list and creating an entry dates list for  
+    for i in range(len(entry_dates)):
+        if eligibility_rules.entry_date == "First day of following Month":
+            entry_dates[i] = eligible_dates[i] + relativedelta(months=1)
+            entry_dates[i]= entry_dates[i].replace(day=1)
 
-            #Creating datetime objects for the service days, service years and service months eligiblity rules
-            service_days=relativedelta(days=eligibility_rules.service_days)
-            service_years=relativedelta(years=eligibility_rules.service_years)
-            service_months=relativedelta(months=eligibility_rules.service_months)
+        elif eligibility_rules.entry_date == "Semi Annual (Jan 1 or July 1)":
 
-            #Creating datetime variables for when the participant becomes eligible for each of the eligiblity requirements (Eligible Days, Eligible Months, Eligible Years)
-            #and appending it to a list
-            eligible_dates=[]
-            eligible_days = start_day + service_days
-            eligible_dates.append(eligible_days)
-            eligible_years = start_day + service_years
-            eligible_dates.append(eligible_years)
-            eligible_months = start_day + service_months
-            eligible_dates.append(eligible_months)
-
-            #Creating entry date, entry month and entry year variables and appending them to a list named "Entry Dates"
-            entry_date=None
-            entry_month=None
-            entry_year=None
-
-            entry_dates=[entry_date,entry_month,entry_year]
-            
-            #Iterating through the entry dates list and creating an entry dates list for  
-            for i in range(len(entry_dates)):
-                if eligibility_rules.entry_date == "First day of following Month":
-                    entry_dates[i] = eligible_dates[i] + relativedelta(months=1)
-                    entry_dates[i]= entry_dates[i].replace(day=1)
-
-                elif eligibility_rules.entry_date == "Semi Annual (Jan 1 or July 1)":
-
-                    #Seting the Mid Year July entry date variable 
+                #Seting the Mid Year July entry date variable 
                     july_eligible_date=engagement.date.replace(month=7,day=1)
 
                     #If the eligible dates variable is greater than the mid year July entry date variable then the entry dates
@@ -136,46 +102,85 @@ def eligibility(participant, eligibility_rules, engagement):
                 
                 #If the eligiblity rules entry date is "Annual (Jan1)" and the eligible date variable is greater than Jan.1 of the engagement year
                 #then the entry date is Jan.1 of the year following the engagement year, else the entry date is the date of the eligible dates.
-                elif eligibility_rules.entry_date == "Annual (Jan 1)":
-                    if eligible_dates[i] > engagement.date.replace(month=1,day=1):
-                        entry_dates[i]=engagement.date + relativedelta(year=1)
-                        entry_dates[i]=entry_dates[i].replace(month=1,day=1)
+        elif eligibility_rules.entry_date == "Annual (Jan 1)":
+            if eligible_dates[i] > engagement.date.replace(month=1,day=1):
+                entry_dates[i]=engagement.date + relativedelta(year=1)
+                entry_dates[i]=entry_dates[i].replace(month=1,day=1)
                 
-                else:
-                    entry_dates[i]=eligible_dates[i]
+            else:
+                entry_dates[i]=eligible_dates[i]
 
-            #Setting the eligible variable to True    
-            eligible=True
+    return entry_dates
 
-            #Iterating through the entry dates list and for each variable in the list if that variable is greater than the engagement date year end then 
-            #the eligible variable is set to false
-            for i in entry_dates:
-                if i > year_end:
-                    eligible=False
             
-            #If the eligible variable is still true that means the entry date had to have been in the current engagement year
-            #therefore we are setting the partiicipants eligible attribute to ture if the eligible variable is true
-            #and false if the eligible variable is false.
-            
-            
-            if eligibility_rules.match_type=='Deferral':
-                if eligible == True:
-                    participant.deferral_eligible=True
-                else:
-                    participant.deferral_eligible=False
-            elif eligibility_rules.match_type=='Match':
-                if eligible == True:
-                    participant.match_eligible=True
-                else:
-                    participant.match_eligible=False
-            elif eligibility_rules.match_type=='Profit Sharing':
-                if eligible == True:
-                    participant.profit_share_eligible=True
-                else:
-                    participant.profit_share_eligible=False
-                
+def eligibility(participant, eligibility_rules, engagement):
+    '''A function that determines if an employee is eligible or not for a specific eligibility rule'''
 
-    return participant.eligible
+    eligibility=True
+    prelim_rules = {"Age":False,"Service_Hours":False,"Excluded_Employees":False}
+    #Check to see if the participant is excluded
+    prelim_rules=excluded_check(participant,prelim_rules)    
+
+    #If the participant's age is over the eligiblity rules age go through additional checks
+    prelim_rules=age_check(participant,eligibility_rules,prelim_rules,engagement)
+
+
+    #If the participant's hours worked is greater than the eligiblity rules service hours then proceed with additional checks   
+    prelim_rules=hours_worked_check(participant,eligibility_rules,prelim_rules)
+
+    #Performing a preliminary check of participant age, hours worked and excluded classifcation and return eligibility as False if any of those dictionary
+    #items are false.
+    for key, value in prelim_rules.items():
+        if value == False:
+            eligibility=False
+            return eligibility
+            
+
+
+    #Calculating the participant's start day
+    start_day=calculate_start_date(participant)
+
+    #Creating datetime objects for the service days, service years and service months eligiblity rules
+    service_days=relativedelta(days=eligibility_rules.service_days)
+    service_years=relativedelta(years=eligibility_rules.service_years)
+    service_months=relativedelta(months=eligibility_rules.service_months)
+
+    #Creating datetime variables for when the participant becomes eligible for each of the eligiblity requirements (Eligible Days, Eligible Months, Eligible Years)
+    #and appending it to a list
+    eligible_dates=[]
+    eligible_days = start_day + service_days
+    eligible_dates.append(eligible_days)
+    eligible_years = start_day + service_years
+    eligible_dates.append(eligible_years)
+    eligible_months = start_day + service_months
+    eligible_dates.append(eligible_months)
+
+    #Creating entry date, entry month and entry year variables and appending them to a list named "Entry Dates"
+    entry_date=None
+    entry_month=None
+    entry_year=None
+    entry_dates=[entry_date, entry_month, entry_year]
+            
+    entry_dates=calculate_entry_dates(participant,eligibility_rules,entry_dates,eligible_dates)
+
+
+    #Iterating through the entry dates list and for each variable in the list if that variable is greater than the engagement date year end then 
+    #the eligible variable is set to false
+    for i in entry_dates:
+        if i > engagement.date:
+            eligibility=False
+            
+     #Making each participant's eligible attribute as False to start with.
+    if eligibility_rules.match_type=="Deferral" and eligibility==True:
+        participant.deferral_eligible=True
+    elif eligibility_rules.match_type=="Match" and eligibility==True:
+        participant.match_eligible=True
+    elif eligibility_rules.match_type=="Profit Sharing" and eligibility==True:
+        participant.profit_share_eligible=True
+
+    participant.save()
+
+    return eligibility
 
 def participating(participant):
 

@@ -1417,7 +1417,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             participant.save()
 
             for rule in eligibility_rules:
-                plugin.eligibility(participant,rule,engagement)
+                print(plugin.eligibility(participant,rule,engagement))
             plugin.participating(participant)
             plugin.effective_deferral(participant)
             
