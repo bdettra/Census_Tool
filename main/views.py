@@ -1243,9 +1243,6 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
                 participant.DOT=data.iloc[i,location_dict['DOT']].date()
                 participant.save()
-                if (participant.DOT < (engagement.date - relativedelta(years=1))) and participant.DORH==None:
-                    error=models.error.objects.create(participant=participant,error_message="DOT is before engagement year")
-                    #messages.error(self.request,participant.first_name + " " + participant.last_name + " " + "has a date of termination that is before the engagement year. You should investigate further.")
 
             if pd.isnull(data.iloc[i,location_dict['DORH']])==False:
                 try:
@@ -1255,6 +1252,11 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                     return render(request,"engagement_page.html",context=context)
 
                 participant.DORH=data.iloc[i,location_dict['DORH']].date()
+
+            if pd.isnull(data.iloc[i,location_dict['DOT']])==False:
+                if (participant.DOT < (engagement.date - relativedelta(years=1))) and (participant.DORH==None):
+                    error=models.error.objects.create(participant=participant,error_message="DOT is before engagement year")
+
 
             if location_dict["Excluded"]==None:
                 participant.excluded=False
@@ -1418,6 +1420,7 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
             for rule in eligibility_rules:
                 print(plugin.eligibility(participant,rule,engagement))
+                print(rule.match_type)
             plugin.participating(participant)
             plugin.effective_deferral(participant)
             
