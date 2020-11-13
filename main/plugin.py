@@ -435,16 +435,14 @@ def previous_year_check(participant,py_engagement):
     py_participants=models.participant.objects.filter(engagement=py_engagement)
     error_dict={"First Name":False,"Last Name":False,"SSN":False,"DOB":False,
     "DOH":False,"DOT":False,"DORH":False}
-    try:
-        if len(py_participant.filter(SSN__exact=pariticpant.SSN))>0:
-            try:
-                py_data=py_participants.get(SSN__exact=pariticpant.SSN,first_name=participant.first_name,last_name=pariticpant.last_name)
-            except:
-                py_data=py_participants.get(SSN__exact=participant.SSN)
-        else:
+    if len(py_participants.filter(SSN__exact=participant.SSN))>0:
+        try:
+            py_data=py_participants.get(SSN__exact=pariticpant.SSN,first_name=participant.first_name,last_name=pariticpant.last_name)
+        except:
             py_data=py_participants.get(SSN__exact=participant.SSN)
-    except:
-        return error_dict
+            print(py_data)
+    else:
+        py_data=py_participants.get(SSN__exact=participant.SSN)
 
 
 
@@ -463,12 +461,6 @@ def previous_year_check(participant,py_engagement):
     if py_data.DOH != participant.DOH:
         error_dict["DOH"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of hire changed from the previous year census. You should investigate further.')
         models.error.objects.create(participant=participant,error_message="DOH data does not match previous year census")
-    '''if py_data.DOT != participant.DOT:
-        error_dict["DOT"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of termination changed from the previous year census. You should investigate further.')
-        models.error.objects.create(participant=participant,error_message="DOT data does not match previous year census")'''
-    '''if py_data.DORH != participant.DORH and py_data.DORH!=None:
-        error_dict["DORH"]=(participant.first_name + ' ' + participant.last_name +"'s" + ' date of rehire changed from the previous year census. You should investigate further.')
-        models.error.objects.create(participant=participant,error_message="DORH data does not match previous year census")'''
 
     return error_dict
 

@@ -22,6 +22,7 @@ django-filter = "*"
 django-datatable-view = "*"
 django-allauth = "*"
 django-guardian = "*"
+guardian = "*"
 
 [requires]
 python_version = "3.7"

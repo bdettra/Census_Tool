@@ -201,7 +201,6 @@ class CreateEngagement(LoginRequiredMixin,TemplateView):
         client_object=models.client.objects.get(slug=slug)
         new_engagement_form=forms.NewEngagementForm(client=client_object,user=request.user)
         context_object={'form':new_engagement_form, "client":client_object}
-        print(new_engagement_form)
         data['html_form']=render_to_string('new_engagement.html',context_object,request=request)
         return JsonResponse(data)
 
@@ -441,7 +440,6 @@ class EngagementView(UserPassesTestMixin, TemplateView):
         eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
         participants = models.participant.objects.filter(engagement=engagement)
         census_form=forms.CensusFileForm()
-        print(eligibility_rules)
         errors=False
         for participant in participants:
             if len(participant.error_set.all())>0:
@@ -856,10 +854,7 @@ class MakeSelections(UserPassesTestMixin, TemplateView):
         eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
 
         x = plugin.generate_selections_version_2(engagement)
-        print(len(x))
-       
-
-        #print(plugin.generate_selections_version_2(engagement,client))
+        
         participants=models.participant.objects.filter(engagement=engagement)
         errors=False
         for participant in participants:
@@ -1419,14 +1414,15 @@ class UploadCensus(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             participant.save()
 
             for rule in eligibility_rules:
-                print(plugin.eligibility(participant,rule,engagement))
-                print(rule.match_type)
+                plugin.eligibility(participant,rule,engagement)
+        
             plugin.participating(participant)
             plugin.effective_deferral(participant)
             
 
             if py_engagement != False:
                 error_messages=plugin.previous_year_check(participant,py_engagement)
+                print(error_messages)
 
                 for key, value in error_messages.items():
                     if value != False:
