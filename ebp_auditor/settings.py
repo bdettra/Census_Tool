@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 from django.contrib.messages import constants as messages
 from pathlib import Path
+import dj_database_url
+from environs import Env
+
+env=Env()
+env.read_env()
 
 
 
@@ -24,10 +29,10 @@ BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '6-vh)6+ohk#jqj%j%k5-g49z%p5qkpxd*(#j9+oes3ga6avbua'
+SECRET_KEY = env("DJANGO_SECUIRTY_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DJANGO_DEBUG",default=False)
 
 if not DEBUG:
     EMAIL_BAKCEND='django.core.mail.backends.smtp.email_backend'
@@ -42,7 +47,7 @@ else:
 
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['.herokuapp.com','localhost','127.0.0.1']
 
 
 # Application definition
@@ -65,6 +70,7 @@ INSTALLED_APPS = [
     'allauth', # new
     'allauth.account', # new
     'guardian',
+    'whitenoise.runserver_nostatic',
 
     'main.apps.MainConfig',
     'accounts.apps.AccountsConfig',
@@ -87,6 +93,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -124,12 +132,6 @@ WSGI_APPLICATION = 'ebp_auditor.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES={
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'mydatabase',
-    }
-}
 
 '''DATABASES = {
     'default': {
@@ -141,6 +143,10 @@ DATABASES={
         'PORT':5432,
     }
 }'''
+
+DATABASES={
+    "default":env.dj_db_url("DATABASE_URL")
+}
 
 
 # Password validation
@@ -227,3 +233,5 @@ ACCOUNT_FORMS = {
 MESSAGE_TAGS ={
     messages.ERROR:'danger'
 }
+
+db_from_env = dj_database_url.config(conn_max_age=500)

@@ -23,6 +23,10 @@ django-datatable-view = "*"
 django-allauth = "*"
 django-guardian = "*"
 guardian = "*"
+whitenoise = "*"
+gunicorn = "*"
+dj-database-url = "*"
+environs = "*"
 
 [requires]
 python_version = "3.7"
