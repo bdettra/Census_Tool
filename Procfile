@@ -1,1 +1,1 @@
-web gunicorn assessment.wsgi --log-file -
+web gunicorn ebp_auditor.wsgi --log-file -
