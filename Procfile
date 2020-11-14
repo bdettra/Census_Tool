@@ -1,1 +1,1 @@
-web gunicorn ebp_auditor.wsgi --log-file --limit-request-line 6000 -
+web gunicorn ebp_auditor.wsgi --log-file --limit-request-line 6000
