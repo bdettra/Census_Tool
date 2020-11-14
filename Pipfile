@@ -26,6 +26,7 @@ whitenoise = "*"
 gunicorn = "*"
 dj-database-url = "*"
 environs = "*"
+django-environs = "*"
 
 [requires]
 python_version = "3.7"
