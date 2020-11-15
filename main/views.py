@@ -437,7 +437,7 @@ class EngagementView(UserPassesTestMixin, TemplateView):
 
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement).order_by("match_type")
         participants = models.participant.objects.filter(engagement=engagement)
         census_form=forms.CensusFileForm()
         errors=False
@@ -484,7 +484,7 @@ class EditDeferralEligibility(UserPassesTestMixin, TemplateView):
         data=dict()
         client=models.client.objects.get(slug=slug)
         engagement=models.engagement.objects.get(slug=Eslug,client=client)
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement).order_by("match_type")
         form=forms.EligibilityForm(request.POST,instance=eligibility_rules.get(match_type="Deferral"))
 
         if form.is_valid():
@@ -525,7 +525,7 @@ class EditDeferralEligibility(UserPassesTestMixin, TemplateView):
 
         header="Deferral"
         
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement).order_by("match_type")
         context={"header":header,"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
 
         data['engagements']=render_to_string('eligibility_rules.html',{"participants":context["participants"],'engagement':context['engagement'], 'client': context['client'],"eligibility_rules":context["eligibility_rules"],},request=request)
@@ -603,7 +603,7 @@ class EditMatchEligibility(UserPassesTestMixin, TemplateView):
                     messages.error(self.request, participant.first_name + " " + participant.last_name + " " + " is an excluded employee who is participating. You should investigate further.")
         
         participants=models.participant.objects.filter(engagement=engagement)
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement).order_by("match_type")
         header="Match"
        
 
@@ -686,7 +686,7 @@ class EditPSEligibility(UserPassesTestMixin, TemplateView):
         participants=models.participant.objects.filter(engagement=engagement)
 
         header = "Profit Sharing"
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement)
+        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement).order_by("match_type")
 
         context={"header":header,"engagement":engagement,"client":client,"eligibility_rules":eligibility_rules,"participants":participants}
 
