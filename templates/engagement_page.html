@@ -180,30 +180,6 @@
     </div>
 </div>
 
-<div class="modal fade" id="" tabindex="-1"
-     role="dialog" aria-labelledBy="fm-modal-grid"
-    aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Upload Census Data</h5>
-                <button class="close" data-dismiss="modal" aria-label="Cerrar">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{census_form|crispy}}
-                    <button class="btn btn-primary" type="submit">Upload</button>
-                </form>
-            </div>
-            <div class="modal-footer">
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="modal fade" id="fm-modal-grid" tabindex="-1"
      role="dialog" aria-labelledBy="fm-modal-grid"
     aria-hidden="true">
@@ -246,16 +222,6 @@
         </div>
     </div>
 </div>
-
-<div class="ajaxProgress">
-    <h3>Loading</h3>
-    <img src="{% static 'images/ajax-loader.gif' %}" alt="loading"/>
-</div>
-
-
-
-
-
 
 
 {% endblock content %}
@@ -307,7 +273,7 @@
                 },
                 "deferRender": true,
                 "columnDefs":[{
-                    'targets':[7,8,9,10,11,12,13,14,15,16,17,16,18,18,20,21,22,23],
+                    'targets':[7,8,9,10,11,12,13,14,15,16,17,16,18,19,20,21,22,23,24,25],
                     'className':'align-center'
                     }             
                 ],

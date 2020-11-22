@@ -62,6 +62,9 @@
             </div>
         </div>
     </div>
+    <div class="ajaxProgress" style="position:absolute; top:50%; left:50%; margin-top:-50px; margin-left:-50px; width:100px; height:100px">
+        <img src="{% static 'images/load-dribbble.gif' %}" alt="loading" style="width:125px; height:100px;"/>
+    </div>
 
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -75,7 +78,3 @@
 
 {% endblock content %}
 
-<div class="ajaxProgress">
-    <h3>Loading</h3>
-    <img src="{% static 'main/images/ajax-loader.gif' %}" alt="loading"/>
-</div>

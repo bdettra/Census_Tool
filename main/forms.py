@@ -317,7 +317,6 @@ class EligibilityForm(forms.ModelForm):
 
         
 
-        print(self.cleaned_data)
         return self.cleaned_data
 
     
@@ -330,7 +329,7 @@ class EligibilityForm(forms.ModelForm):
         #Getting the age, service hours, service days, service months, service years, excluded employees and entry date data
         #from the form and appending it to the data list.
         match_type = self.instance.match_type
-        print(match_type)
+
 
         age=self.cleaned_data.get("age")
         data.append(age)

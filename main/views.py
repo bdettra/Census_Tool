@@ -493,10 +493,10 @@ class EditDeferralEligibility(UserPassesTestMixin, TemplateView):
             print('Form not Valid')
         
         client=models.client.objects.get(slug=slug)
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement,match_type="Deferral")
-        
+        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement,match_type="Deferral")
+        print(eligibility_rules.match_type)
         participants=models.participant.objects.filter(engagement=engagement)
-        
+        print("Working")
         if len(participants)>0:
         
             for participant in participants:
@@ -506,9 +506,9 @@ class EditDeferralEligibility(UserPassesTestMixin, TemplateView):
                 
         
 
-        
+                print("First Test Passed")
                 participant.save()
-                if participant.eligible == False and participant.participating==True:
+                if participant.deferral_eligible == False and participant.participating==True:
                     if participant.DOT!=None:
                         if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
                             pass
@@ -532,7 +532,7 @@ class EditDeferralEligibility(UserPassesTestMixin, TemplateView):
         
         data['form_is_valid']=True
         data['html_form']=render_to_string('edit_deferral.html',context,request=request)
-        
+        print(data)
         return JsonResponse(data)
 
 class EditMatchEligibility(UserPassesTestMixin, TemplateView):
@@ -574,7 +574,7 @@ class EditMatchEligibility(UserPassesTestMixin, TemplateView):
         else:
             print('Form Not Valid')
         client=models.client.objects.get(slug=slug)
-        eligibility_rules=models.eligibility_rules.objects.filter(engagement=engagement,match_type="Match")
+        eligibility_rules=models.eligibility_rules.objects.get(engagement=engagement,match_type="Match")
         
         participants=models.participant.objects.filter(engagement=engagement)
         
@@ -589,7 +589,7 @@ class EditMatchEligibility(UserPassesTestMixin, TemplateView):
 
         
                 participant.save()
-                if participant.eligible == False and participant.participating==True:
+                if participant.match_eligible == False and participant.participating==True:
                     if participant.DOT!=None:
                         if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
                             pass
@@ -670,7 +670,7 @@ class EditPSEligibility(UserPassesTestMixin, TemplateView):
 
         
                 participant.save()
-                if participant.eligible == False and participant.participating==True:
+                if participant.profit_share_eligible == False and participant.participating==True:
                     if participant.DOT!=None:
                         if participant.DOT > (engagement.date - relativedelta(years=1)) and participant.DOT < engagement.date:
                             pass

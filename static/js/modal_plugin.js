@@ -269,6 +269,7 @@ $(document).ready(function () {
     //Show Upload Census Form
     $(".upload-census_form").click("#upload_census",ShowModalForm);
 
+
     //Update Census Table
     $('#census_list').on("click")
 
